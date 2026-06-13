@@ -78,18 +78,19 @@ export default function AlertList({ alerts, onAlertDeleted }: AlertListProps) {
     return indicatorMap[indicator] || indicator;
   }
 
-  function getIndicatorDetails(indicator: string, parameters: any): string {
+  function getIndicatorDetails(indicator: string, parameters: any, symbolCode?: string): string {
     if (!parameters) return "";
 
     switch (indicator) {
       case "target_price": {
         const parts: string[] = [];
         const targetPrice = parameters.target_price || parameters;
+        const currency = (symbolCode && (symbolCode.endsWith('.KS') || symbolCode.endsWith('.KQ'))) ? '원' : '달러';
         if (targetPrice.buy_price) {
-          parts.push(`매수: ${Number(targetPrice.buy_price).toLocaleString()}원`);
+          parts.push(`매수: ${Number(targetPrice.buy_price).toLocaleString()}${currency}`);
         }
         if (targetPrice.sell_price) {
-          parts.push(`매도: ${Number(targetPrice.sell_price).toLocaleString()}원`);
+          parts.push(`매도: ${Number(targetPrice.sell_price).toLocaleString()}${currency}`);
         }
         return parts.length > 0 ? `매수/매도가(${parts.join(", ")})` : "매수/매도가";
       }
@@ -207,7 +208,7 @@ export default function AlertList({ alerts, onAlertDeleted }: AlertListProps) {
             <div className="flex-1">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <h3 className="font-semibold text-zinc-900 dark:text-zinc-50 flex-1">
-                  {getSymbolName(alert.condition.symbol)} {alert.condition.indicator !== "target_price" && getTimeframeName(alert.condition.timeframe)} {getIndicatorDetails(alert.condition.indicator, alert.parameters)}
+                  {getSymbolName(alert.condition.symbol)} {alert.condition.indicator !== "target_price" && getTimeframeName(alert.condition.timeframe)} {getIndicatorDetails(alert.condition.indicator, alert.parameters, alert.condition.symbol)}
                 </h3>
                 <span
                   className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium whitespace-nowrap flex-shrink-0 ${
@@ -229,7 +230,7 @@ export default function AlertList({ alerts, onAlertDeleted }: AlertListProps) {
                   </p>
                 )}
                 <p>
-                  <span className="font-medium">알림 설정:</span> {getIndicatorDetails(alert.condition.indicator, alert.parameters)}
+                  <span className="font-medium">알림 설정:</span> {getIndicatorDetails(alert.condition.indicator, alert.parameters, alert.condition.symbol)}
                 </p>
                 <p>
                   <span className="font-medium">조건:</span> {getConditionName(alert.enable_buy_signal ?? true, alert.enable_sell_signal ?? true)}

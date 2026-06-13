@@ -19,7 +19,7 @@ interface AlertFormProps {
 export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCreated }: AlertFormProps) {
   const [symbolName, setSymbolName] = useState("????");
   const [symbolCode, setSymbolCode] = useState("005930.KS");
-  const [isInitialSymbol, setIsInitialSymbol] = useState(true); // ?? ???? ??
+  const [isInitialSymbol, setIsInitialSymbol] = useState(true); // ?? ?? ??
   const [stockInfo, setStockInfo] = useState<{ price: number; change: number; change_percent: number } | null>(null);
   const [loadingStockInfo, setLoadingStockInfo] = useState(false);
   const [timeframe, setTimeframe] = useState("1d");
@@ -31,7 +31,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ??? ???? ??
+  // ??? ???? ???
   const [parameters, setParameters] = useState<Record<string, any>>({
     // ???
     disparity: { ma_period: 20, overheat: 105, chill: 95 },
@@ -145,7 +145,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
     setError(null);
 
     if (!canAddAlert) {
-      setError("?? ???? ?? 1?? ??? ??? ? ????. ?????? ????????.");
+      setError("?? ??? ?? 1?? ??? ??? ? ????. ?????? ????????.");
       setLoading(false);
       return;
     }
@@ -161,7 +161,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        throw new Error("???? ?????.");
+        throw new Error("??? ?????.");
       }
 
       const { error } = await supabase.from("alerts").insert({
@@ -184,7 +184,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
         throw error;
       }
 
-      // ?? ?? ???? ???? ?? ?? ??
+      // ?? ????? ?? ??? ?? ?? ???? ??
       // setSymbolName(""); 
       // setSymbolCode("");
       // setTimeframe("1d");
@@ -219,11 +219,11 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
             onChange={(name, code) => {
               setSymbolName(name);
               setSymbolCode(code);
-              setIsInitialSymbol(false); // ???? ?? ???? ? ?? ?? ??? ??
+              setIsInitialSymbol(false); // ???? ?? ?? ? ?? ??? ???
             }}
             onFocusCapture={() => {
               if (isInitialSymbol) {
-                // ?? ?? ??? ???
+                // ?? ?? ??
                 setSymbolName("");
                 setSymbolCode("");
                 setIsInitialSymbol(false);
@@ -235,7 +235,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
           {/* ?? ?? ?? */}
           {loadingStockInfo && (
             <div className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-              ?? ?? ???? ?...
+              ?? ??? ???? ?...
             </div>
           )}
           {stockInfo && !loadingStockInfo && (
@@ -260,7 +260,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
           )}
         </div>
 
-        {/* ??/???? ??? ?????? ?? */}
+        {/* ??/???? ????? ?? ??? */}
         {indicator !== 'target_price' && (
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
@@ -344,7 +344,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
             onChange={(e) => {
               const newIndicator = e.target.value;
               setIndicator(newIndicator);
-              // ?? ???? ?? ??? ???? ?? ?? ??
+              // ?? ???? ?? ??? ???? ?? ?? ???
               if (['target_price', 'ma_price_cross', 'ma_cross'].includes(newIndicator)) {
                 setShowIndicatorSettings(true);
               }
@@ -409,7 +409,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                           : 'text-red-600 dark:text-red-400'
                       }`}>
                         ?? ?? {((parameters.target_price.buy_price - stockInfo.price) / stockInfo.price * 100).toFixed(2)}%
-                        {((parameters.target_price.buy_price - stockInfo.price) / stockInfo.price * 100) < 0 ? ' ?? ?' : ' ?? ?'}
+                        {((parameters.target_price.buy_price - stockInfo.price) / stockInfo.price * 100) < 0 ? ' ?? ??' : ' ?? ??'}
                       </p>
                     )}
                   </div>
@@ -438,12 +438,12 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                           : 'text-blue-600 dark:text-blue-400'
                       }`}>
                         ?? ?? {((parameters.target_price.sell_price - stockInfo.price) / stockInfo.price * 100).toFixed(2)}%
-                        {((parameters.target_price.sell_price - stockInfo.price) / stockInfo.price * 100) > 0 ? ' ?? ?' : ' ?? ?'}
+                        {((parameters.target_price.sell_price - stockInfo.price) / stockInfo.price * 100) > 0 ? ' ?? ??' : ' ?? ??'}
                       </p>
                     )}
                   </div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    ???? ???? ??? ????. ???? ??? ? ?? ?? ??????.
+                    ???? ???? ?? ??? ?? ????. ? ? ??? ??? ?? ????.
                   </p>
                 </>
               )}
@@ -452,7 +452,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                 <>
                   <div>
                     <label htmlFor="disparity_ma_period" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ?? ??? (?)
+                      ?? ??? ?? (?)
                     </label>
                     <input
                       id="disparity_ma_period"
@@ -513,7 +513,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="cci_upper" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ?? ??
+                      ??? ??
                     </label>
                     <input
                       id="cci_upper"
@@ -527,7 +527,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="cci_lower" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ?? ??
+                      ??? ??
                     </label>
                     <input
                       id="cci_lower"
@@ -560,7 +560,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="rsi_overbought" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ???
+                      ????
                     </label>
                     <input
                       id="rsi_overbought"
@@ -574,7 +574,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="rsi_oversold" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ???
+                      ????
                     </label>
                     <input
                       id="rsi_oversold"
@@ -607,7 +607,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="bollinger_std_dev" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ??
+                      ????
                     </label>
                     <input
                       id="bollinger_std_dev"
@@ -655,7 +655,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="macd_signal" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ???
+                      ????
                     </label>
                     <input
                       id="macd_signal"
@@ -687,7 +687,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                     />
                   </div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    ??? ??? {parameters.ma_price_cross.period}? ???? ???? ?? ??? ?????.
+                    ?? ??? {parameters.ma_price_cross.period}? ?????? ??? ? ??? ????.
                   </p>
                 </>
               )}
@@ -757,7 +757,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
             </button>
           </div>
           <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-            ?????? ??, ?????? ?? ??????
+            ? ? ?????, ??? ??? ? ????
           </p>
         </div>
 
@@ -766,12 +766,12 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
           disabled={loading || !canAddAlert}
           className="w-full rounded-lg bg-gradient-to-r from-teal-500 to-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-all hover:from-teal-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-md hover:shadow-lg"
         >
-          {loading ? "?? ?..." : "?? ??"}
+          {loading ? "?? ?? ?..." : "?? ??"}
         </button>
 
         {profile?.subscription_type === "free" && alertCount >= 1 && (
           <p className="text-xs text-center text-zinc-500 dark:text-zinc-400">
-            ?? ???? ?? 1?? ??? ??? ? ????.
+            ?? ??? ?? 1?? ??? ??? ? ????.
           </p>
         )}
       </form>
