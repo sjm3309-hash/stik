@@ -163,17 +163,6 @@ export default function NotificationSetup() {
     };
   }, []);
 
-  return (
-    <section className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-        Stik 알림
-      </h2>
-      <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-        {message}
-      </p>
-      <p className="mt-3 text-xs uppercase tracking-wide text-zinc-500">
-        상태: {status}
-      </p>
-    </section>
-  );
+  // 알림은 백그라운드에서 등록되지만 UI는 표시하지 않음
+  return null;
 }

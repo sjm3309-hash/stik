@@ -103,7 +103,12 @@ export default function DashboardPage() {
       <NotificationSetup />
       <header className="border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <h1 className="text-xl font-semibold text-black dark:text-zinc-50">Stik 대시보드</h1>
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="Stik Logo" className="h-10 w-10" />
+            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-blue-600">
+              Stik
+            </h1>
+          </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-zinc-600 dark:text-zinc-400">
               {user?.email} ({profile?.subscription_type === "premium" ? "프리미엄" : "무료"})
@@ -112,11 +117,11 @@ export default function DashboardPage() {
           </div>
         </div>
       </header>
-      <main className="flex flex-1 px-6 py-8">
-        <div className="mx-auto w-full max-w-6xl space-y-8">
+      <main className="flex flex-1 px-6 py-4">
+        <div className="mx-auto w-full max-w-6xl space-y-4">
           <div className="grid gap-6 lg:grid-cols-2">
             <div>
-              <h2 className="text-2xl font-semibold text-black dark:text-zinc-50 mb-4">
+              <h2 className="text-xl font-semibold text-black dark:text-zinc-50 mb-3">
                 알림 추가
               </h2>
               <AlertForm
@@ -127,7 +132,7 @@ export default function DashboardPage() {
               />
             </div>
             <div>
-              <h2 className="text-2xl font-semibold text-black dark:text-zinc-50 mb-4">
+              <h2 className="text-xl font-semibold text-black dark:text-zinc-50 mb-3">
                 내 알림 ({alertCount})
               </h2>
               <AlertList

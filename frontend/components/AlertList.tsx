@@ -212,7 +212,7 @@ export default function AlertList({ alerts, onAlertDeleted }: AlertListProps) {
                 <span
                   className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium whitespace-nowrap flex-shrink-0 ${
                     alert.is_active
-                      ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                      ? "bg-teal-100 text-teal-800 dark:bg-teal-900/20 dark:text-teal-400"
                       : "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-400"
                   }`}
                 >
