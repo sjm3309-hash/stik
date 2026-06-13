@@ -96,7 +96,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
   }
 
   // 파라미터 업데이트
-  function updateParameter(indicatorKey: string, paramKey: string, value: string | number) {
+  function updateParameter(indicatorKey: string, paramKey: string, value: string | number | null) {
     setParameters((prev) => ({
       ...prev,
       [indicatorKey]: {
