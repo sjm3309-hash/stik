@@ -17,7 +17,7 @@ interface AlertFormProps {
 }
 
 export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCreated }: AlertFormProps) {
-  const [symbolName, setSymbolName] = useState("????");
+  const [symbolName, setSymbolName] = useState("삼성전자");
   const [symbolCode, setSymbolCode] = useState("005930.KS");
   const [isInitialSymbol, setIsInitialSymbol] = useState(true);
   const [stockInfo, setStockInfo] = useState<{ price: number; change: number; change_percent: number } | null>(null);
