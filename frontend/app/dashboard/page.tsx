@@ -22,6 +22,8 @@ type Alert = {
   condition: any;
   parameters: any;
   is_active: boolean;
+  enable_buy_signal: boolean;
+  enable_sell_signal: boolean;
   created_at: string;
   updated_at: string;
 };
