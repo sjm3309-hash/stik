@@ -1,5 +1,5 @@
 "use client";
-
+// UTF-8 encoding fix for Korean text
 import { useState, useRef, useEffect } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import SymbolAutocomplete from "@/components/SymbolAutocomplete";
