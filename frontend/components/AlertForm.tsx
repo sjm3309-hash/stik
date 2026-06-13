@@ -44,7 +44,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
 
   const [dayDropdownOpen, setDayDropdownOpen] = useState(false);
   const [minuteDropdownOpen, setMinuteDropdownOpen] = useState(false);
-  const [selectedDay, setSelectedDay] = useState("?");
+  const [selectedDay, setSelectedDay] = useState("일");
   const [selectedMinute, setSelectedMinute] = useState("5");
 
   const dayDropdownRef = useRef<HTMLDivElement>(null);
@@ -68,10 +68,10 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
     setSelectedDay(day);
     setDayDropdownOpen(false);
     let timeframe = "1d";
-    if (day === "?") timeframe = "1d";
-    else if (day === "?") timeframe = "1w";
-    else if (day === "?") timeframe = "1M";
-    else if (day === "?") timeframe = "1Y";
+    if (day === "일") timeframe = "1d";
+    else if (day === "주") timeframe = "1w";
+    else if (day === "월") timeframe = "1M";
+    else if (day === "년") timeframe = "1Y";
     setTimeframe(timeframe);
   }
 
@@ -129,13 +129,13 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
     setError(null);
 
     if (!canAddAlert) {
-      setError("?? ??? ?? 1?? ??? ??? ? ????. ?????? ????????.");
+      setError("무료 플랜은 최대 1개의 알림만 추가할 수 있습니다. 프리미엄으로 업그레이드하세요.");
       setLoading(false);
       return;
     }
 
     if (!symbolCode) {
-      setError("??? ??????.");
+      setError("종목을 선택해주세요.");
       setLoading(false);
       return;
     }
@@ -145,7 +145,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        throw new Error("??? ?????.");
+        throw new Error("인증이 필요합니다.");
       }
 
       const { error } = await supabase.from("alerts").insert({
@@ -172,7 +172,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
       setShowIndicatorSettings(false);
       onAlertCreated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "?? ?? ? ??? ??????.");
+      setError(err instanceof Error ? err.message : "알림 생성 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -189,7 +189,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
 
         <div>
           <label htmlFor="symbol" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-            ?? ??
+            종목 이름
           </label>
           <SymbolAutocomplete
             value={symbolName}
@@ -205,19 +205,19 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                 setIsInitialSymbol(false);
               }
             }}
-            placeholder="?? ?? (?: ????, Apple)"
+            placeholder="종목 검색 (예: 삼성전자, Apple)"
           />
           
           {loadingStockInfo && (
             <div className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-              ?? ??? ???? ?...
+              주가 정보를 가져오는 중...
             </div>
           )}
           {stockInfo && !loadingStockInfo && (
             <div className="mt-2 flex items-center gap-3 text-sm">
               <span className="font-semibold text-zinc-900 dark:text-zinc-100">
                 {symbolCode.endsWith('.KS') || symbolCode.endsWith('.KQ') 
-                  ? `${stockInfo.price.toLocaleString()}?`
+                  ? `${stockInfo.price.toLocaleString()}원`
                   : `$${stockInfo.price.toLocaleString()}`}
               </span>
               <span className={`flex items-center gap-1 font-medium ${
@@ -225,9 +225,9 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   ? 'text-red-600 dark:text-red-400' 
                   : 'text-blue-600 dark:text-blue-400'
               }`}>
-                {stockInfo.change >= 0 ? '?' : '?'} 
+                {stockInfo.change >= 0 ? '▲' : '▼'} 
                 {symbolCode.endsWith('.KS') || symbolCode.endsWith('.KQ')
-                  ? `${Math.abs(stockInfo.change).toLocaleString()}?`
+                  ? `${Math.abs(stockInfo.change).toLocaleString()}원`
                   : `$${Math.abs(stockInfo.change).toLocaleString()}`}
                 ({stockInfo.change >= 0 ? '+' : ''}{stockInfo.change_percent.toFixed(2)}%)
               </span>
@@ -238,7 +238,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
         {indicator !== 'target_price' && (
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              ??
+              주기
             </label>
             <div className="flex gap-2">
               <div ref={dayDropdownRef} className="relative">
@@ -258,7 +258,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                 </button>
               {dayDropdownOpen && (
                 <div className="absolute top-full left-0 z-20 mt-1 w-24 rounded-lg border-2 border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-800 overflow-hidden">
-                  {["?", "?", "?", "?"].map((day) => (
+                  {["일", "주", "월", "년"].map((day) => (
                     <button
                       key={day}
                       type="button"
@@ -285,7 +285,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                     : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
                 }`}
               >
-                {selectedMinute}?
+                {selectedMinute}분
               </button>
               {minuteDropdownOpen && (
                 <div className="absolute top-full left-0 z-20 mt-1 w-24 rounded-lg border-2 border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-800 overflow-hidden max-h-64 overflow-y-auto">
@@ -308,7 +308,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
 
         <div>
           <label htmlFor="indicator" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-            ?? ??
+            알림 설정
           </label>
           <select
             id="indicator"
@@ -322,14 +322,14 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
             }}
             className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
           >
-            <option value="target_price">???/???</option>
+            <option value="target_price">매수가/매도가</option>
             <option value="macd">MACD</option>
-            <option value="disparity">???</option>
+            <option value="disparity">괴리도</option>
             <option value="cci">CCI</option>
-            <option value="ma_price_cross">??? ?? ??</option>
-            <option value="ma_cross">??? ?????</option>
+            <option value="ma_price_cross">이평선 가격 돌파</option>
+            <option value="ma_cross">이평선 크로스오버</option>
             <option value="rsi">RSI</option>
-            <option value="bollinger">??? ??</option>
+            <option value="bollinger">볼린저 밴드</option>
           </select>
         </div>
 
@@ -347,7 +347,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
-            <span>?? ?? ??</span>
+            <span>지표 상세 설정</span>
           </button>
 
           {showIndicatorSettings && (
@@ -356,12 +356,12 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                 <>
                   <div>
                     <label htmlFor="buy_price" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ?? ??? ({symbolCode.endsWith('.KS') || symbolCode.endsWith('.KQ') ? '?' : '??'}) {!enableBuySignal && <span className="text-xs text-zinc-500">(???)</span>}
+                      매수 목표가 ({symbolCode.endsWith('.KS') || symbolCode.endsWith('.KQ') ? '원' : '달러'}) {!enableBuySignal && <span className="text-xs text-zinc-500">(비활성)</span>}
                     </label>
                     <input
                       id="buy_price"
                       type="text"
-                      placeholder="?? ?? ??"
+                      placeholder="매수 가격 입력"
                       disabled={!enableBuySignal}
                       value={parameters.target_price.buy_price ? parameters.target_price.buy_price.toLocaleString() : ''}
                       onChange={(e) => {
@@ -378,19 +378,19 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                           ? 'text-blue-600 dark:text-blue-400' 
                           : 'text-red-600 dark:text-red-400'
                       }`}>
-                        ?? ?? {((parameters.target_price.buy_price - stockInfo.price) / stockInfo.price * 100).toFixed(2)}%
-                        {((parameters.target_price.buy_price - stockInfo.price) / stockInfo.price * 100) < 0 ? ' ?? ??' : ' ?? ??'}
+                        현재 가격 {((parameters.target_price.buy_price - stockInfo.price) / stockInfo.price * 100).toFixed(2)}%
+                        {((parameters.target_price.buy_price - stockInfo.price) / stockInfo.price * 100) < 0 ? ' 대비 손실' : ' 대비 수익'}
                       </p>
                     )}
                   </div>
                   <div>
                     <label htmlFor="sell_price" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ?? ??? ({symbolCode.endsWith('.KS') || symbolCode.endsWith('.KQ') ? '?' : '??'}) {!enableSellSignal && <span className="text-xs text-zinc-500">(???)</span>}
+                      매도 목표가 ({symbolCode.endsWith('.KS') || symbolCode.endsWith('.KQ') ? '원' : '달러'}) {!enableSellSignal && <span className="text-xs text-zinc-500">(비활성)</span>}
                     </label>
                     <input
                       id="sell_price"
                       type="text"
-                      placeholder="?? ?? ??"
+                      placeholder="매도 가격 입력"
                       disabled={!enableSellSignal}
                       value={parameters.target_price.sell_price ? parameters.target_price.sell_price.toLocaleString() : ''}
                       onChange={(e) => {
@@ -407,13 +407,13 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                           ? 'text-red-600 dark:text-red-400' 
                           : 'text-blue-600 dark:text-blue-400'
                       }`}>
-                        ?? ?? {((parameters.target_price.sell_price - stockInfo.price) / stockInfo.price * 100).toFixed(2)}%
-                        {((parameters.target_price.sell_price - stockInfo.price) / stockInfo.price * 100) > 0 ? ' ?? ??' : ' ?? ??'}
+                        현재 가격 {((parameters.target_price.sell_price - stockInfo.price) / stockInfo.price * 100).toFixed(2)}%
+                        {((parameters.target_price.sell_price - stockInfo.price) / stockInfo.price * 100) > 0 ? ' 대비 수익' : ' 대비 손실'}
                       </p>
                     )}
                   </div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    ???? ???? ?? ??? ?? ????. ? ? ??? ??? ?? ????.
+                    매수가와 매도가를 모두 설정할 수도 있습니다. 둘 중 하나만 설정할 수도 있습니다.
                   </p>
                 </>
               )}
@@ -422,7 +422,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                 <>
                   <div>
                     <label htmlFor="disparity_ma_period" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ?? ??? ?? (?)
+                      이동 평균선 기간 (일)
                     </label>
                     <input
                       id="disparity_ma_period"
@@ -436,7 +436,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="disparity_overheat" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ?? (%)
+                      과열 (%)
                     </label>
                     <input
                       id="disparity_overheat"
@@ -450,7 +450,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="disparity_chill" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ?? (%)
+                      침체 (%)
                     </label>
                     <input
                       id="disparity_chill"
@@ -469,7 +469,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                 <>
                   <div>
                     <label htmlFor="cci_period" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ??
+                      기간
                     </label>
                     <input
                       id="cci_period"
@@ -483,7 +483,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="cci_upper" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ??? ??
+                      과매수 기준
                     </label>
                     <input
                       id="cci_upper"
@@ -497,7 +497,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="cci_lower" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ??? ??
+                      과매도 기준
                     </label>
                     <input
                       id="cci_lower"
@@ -516,7 +516,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                 <>
                   <div>
                     <label htmlFor="rsi_period" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ??
+                      기간
                     </label>
                     <input
                       id="rsi_period"
@@ -530,7 +530,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="rsi_overbought" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ????
+                      과매수선
                     </label>
                     <input
                       id="rsi_overbought"
@@ -544,7 +544,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="rsi_oversold" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ????
+                      과매도선
                     </label>
                     <input
                       id="rsi_oversold"
@@ -563,7 +563,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                 <>
                   <div>
                     <label htmlFor="bollinger_period" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ??
+                      기간
                     </label>
                     <input
                       id="bollinger_period"
@@ -577,7 +577,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="bollinger_std_dev" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ????
+                      표준편차
                     </label>
                     <input
                       id="bollinger_std_dev"
@@ -597,7 +597,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                 <>
                   <div>
                     <label htmlFor="macd_fast" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ??
+                      단기
                     </label>
                     <input
                       id="macd_fast"
@@ -611,7 +611,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="macd_slow" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ??
+                      장기
                     </label>
                     <input
                       id="macd_slow"
@@ -625,7 +625,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="macd_signal" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ????
+                      시그널선
                     </label>
                     <input
                       id="macd_signal"
@@ -644,7 +644,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                 <>
                   <div>
                     <label htmlFor="ma_price_cross_period" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ??? ??
+                      이평선 기간
                     </label>
                     <input
                       id="ma_price_cross_period"
@@ -657,7 +657,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                     />
                   </div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    ?? ??? {parameters.ma_price_cross.period}? ?????? ??? ? ??? ????.
+                    현재 가격이 {parameters.ma_price_cross.period}봉 이동평균선을 돌파할 때 알림을 보냅니다.
                   </p>
                 </>
               )}
@@ -666,7 +666,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                 <>
                   <div>
                     <label htmlFor="ma_short_period" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ?? ??? ??
+                      단기 이평선 기간
                     </label>
                     <input
                       id="ma_short_period"
@@ -680,7 +680,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   </div>
                   <div>
                     <label htmlFor="ma_long_period" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ?? ??? ??
+                      장기 이평선 기간
                     </label>
                     <input
                       id="ma_long_period"
@@ -700,7 +700,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
 
         <div>
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-            ?? ??
+            알림 종류
           </label>
           <div className="flex gap-2">
             <button
@@ -712,7 +712,7 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               }`}
             >
-              ??
+              매수
             </button>
             <button
               type="button"
@@ -723,11 +723,11 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
                   : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               }`}
             >
-              ??
+              매도
             </button>
           </div>
           <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-            ? ? ?????, ??? ??? ? ????
+            둘 다 선택하거나, 하나만 선택할 수 있습니다
           </p>
         </div>
 
@@ -736,12 +736,12 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
           disabled={loading || !canAddAlert}
           className="w-full rounded-lg bg-gradient-to-r from-teal-500 to-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-all hover:from-teal-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-md hover:shadow-lg"
         >
-          {loading ? "?? ?? ?..." : "?? ??"}
+          {loading ? "알림 생성 중..." : "알림 생성"}
         </button>
 
         {profile?.subscription_type === "free" && alertCount >= 1 && (
           <p className="text-xs text-center text-zinc-500 dark:text-zinc-400">
-            ?? ??? ?? 1?? ??? ??? ? ????.
+            무료 플랜은 최대 1개의 알림만 추가할 수 있습니다.
           </p>
         )}
       </form>
