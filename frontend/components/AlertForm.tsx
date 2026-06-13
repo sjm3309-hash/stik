@@ -19,7 +19,7 @@ interface AlertFormProps {
 export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCreated }: AlertFormProps) {
   const [symbolName, setSymbolName] = useState("????");
   const [symbolCode, setSymbolCode] = useState("005930.KS");
-  const [isInitialSymbol, setIsInitialSymbol] = useState(true); // ?? ?? ??
+  const [isInitialSymbol, setIsInitialSymbol] = useState(true);
   const [stockInfo, setStockInfo] = useState<{ price: number; change: number; change_percent: number } | null>(null);
   const [loadingStockInfo, setLoadingStockInfo] = useState(false);
   const [timeframe, setTimeframe] = useState("1d");
@@ -31,27 +31,17 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ??? ???? ???
   const [parameters, setParameters] = useState<Record<string, any>>({
-    // ???
     disparity: { ma_period: 20, overheat: 105, chill: 95 },
-    // CCI
     cci: { period: 14, upper: 100, lower: -100 },
-    // RSI
     rsi: { period: 14, overbought: 70, oversold: 30 },
-    // ??? ??
     bollinger: { period: 20, std_dev: 2 },
-    // MACD
     macd: { fast: 12, slow: 26, signal: 9 },
-    // ??? ?????
     ma: { short_period: 20, long_period: 50 },
-    // ??? ?? ??
     ma_price_cross: { period: 20 },
-    // ???
     target_price: { buy_price: null, sell_price: null },
   });
 
-  // ???? ??
   const [dayDropdownOpen, setDayDropdownOpen] = useState(false);
   const [minuteDropdownOpen, setMinuteDropdownOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState("?");
@@ -60,7 +50,6 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
   const dayDropdownRef = useRef<HTMLDivElement>(null);
   const minuteDropdownRef = useRef<HTMLDivElement>(null);
 
-  // ?? ?? ? ???? ??
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dayDropdownRef.current && !dayDropdownRef.current.contains(event.target as Node)) {
@@ -75,7 +64,6 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ?/?/?/? ??
   function handleDaySelect(day: string) {
     setSelectedDay(day);
     setDayDropdownOpen(false);
@@ -87,14 +75,12 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
     setTimeframe(timeframe);
   }
 
-  // ?? ??
   function handleMinuteSelect(minute: string) {
     setSelectedMinute(minute);
     setMinuteDropdownOpen(false);
     setTimeframe(`${minute}m`);
   }
 
-  // ???? ????
   function updateParameter(indicatorKey: string, paramKey: string, value: string | number | null) {
     setParameters((prev) => ({
       ...prev,
@@ -105,7 +91,6 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
     }));
   }
 
-  // ?? ?? ????
   async function fetchStockInfo(symbol: string) {
     if (!symbol) {
       setStockInfo(null);
@@ -130,7 +115,6 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
     }
   }
 
-  // symbolCode? ??? ??? ?? ?? ????
   useEffect(() => {
     if (symbolCode) {
       fetchStockInfo(symbolCode);
@@ -168,29 +152,22 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
         user_id: user.id,
         name: `${symbolName} ${timeframe} ${indicator}`,
         condition: {
-          symbol: symbolCode, // yfinance ?? ??
+          symbol: symbolCode,
           timeframe,
           indicator,
-          condition: "both", // ????? ??/?? ??
+          condition: "both",
         },
         enable_buy_signal: enableBuySignal,
         enable_sell_signal: enableSellSignal,
         ma_short_period: parameters.ma.short_period,
         ma_long_period: parameters.ma.long_period,
-        parameters: parameters, // ??? ???? ??
+        parameters: parameters,
       });
 
       if (error) {
         throw error;
       }
 
-      // ?? ????? ?? ??? ?? ?? ???? ??
-      // setSymbolName(""); 
-      // setSymbolCode("");
-      // setTimeframe("1d");
-      // setIndicator("ma_cross");
-      // setEnableBuySignal(true);
-      // setEnableSellSignal(true);
       setShowAdvanced(false);
       setShowIndicatorSettings(false);
       onAlertCreated();
@@ -219,11 +196,10 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
             onChange={(name, code) => {
               setSymbolName(name);
               setSymbolCode(code);
-              setIsInitialSymbol(false); // ???? ?? ?? ? ?? ??? ???
+              setIsInitialSymbol(false);
             }}
             onFocusCapture={() => {
               if (isInitialSymbol) {
-                // ?? ?? ??
                 setSymbolName("");
                 setSymbolCode("");
                 setIsInitialSymbol(false);
@@ -232,7 +208,6 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
             placeholder="?? ?? (?: ????, Apple)"
           />
           
-          {/* ?? ?? ?? */}
           {loadingStockInfo && (
             <div className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
               ?? ??? ???? ?...
@@ -260,14 +235,12 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
           )}
         </div>
 
-        {/* ??/???? ????? ?? ??? */}
         {indicator !== 'target_price' && (
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
               ??
             </label>
             <div className="flex gap-2">
-              {/* ?/?/?/? ? */}
               <div ref={dayDropdownRef} className="relative">
                 <button
                   type="button"
@@ -299,7 +272,6 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
               )}
             </div>
 
-            {/* ?? ? */}
             <div ref={minuteDropdownRef} className="relative">
               <button
                 type="button"
@@ -344,7 +316,6 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
             onChange={(e) => {
               const newIndicator = e.target.value;
               setIndicator(newIndicator);
-              // ?? ???? ?? ??? ???? ?? ?? ???
               if (['target_price', 'ma_price_cross', 'ma_cross'].includes(newIndicator)) {
                 setShowIndicatorSettings(true);
               }
@@ -362,7 +333,6 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
           </select>
         </div>
 
-        {/* ?? ?? ?? ?? */}
         <div>
           <button
             type="button"

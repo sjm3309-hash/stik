@@ -27,9 +27,9 @@ export default function SignupPage() {
         throw error;
       }
 
-      router.push("/login?message=????? ???????. ???????.");
+      router.push("/login?message=회원가입이 완료되었습니다. 로그인해주세요.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "???? ? ??? ??????.");
+      setError(err instanceof Error ? err.message : "회원가입 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -40,12 +40,12 @@ export default function SignupPage() {
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            ????
+            회원가입
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            ?? ??? ??????{" "}
+            이미 계정이 있으신가요?{" "}
             <a href="/login" className="font-medium text-teal-600 hover:text-teal-500">
-              ???
+              로그인
             </a>
           </p>
         </div>
@@ -53,7 +53,7 @@ export default function SignupPage() {
           <div className="rounded-md shadow-sm space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                ???
+                이메일
               </label>
               <input
                 id="email"
@@ -69,7 +69,7 @@ export default function SignupPage() {
             </div>
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                ????
+                비밀번호
               </label>
               <input
                 id="password"
@@ -78,7 +78,7 @@ export default function SignupPage() {
                 autoComplete="new-password"
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-teal-500 focus:border-teal-500 focus:z-10 sm:text-sm"
-                placeholder="????"
+                placeholder="비밀번호"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -97,7 +97,7 @@ export default function SignupPage() {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-teal-500 to-blue-600 shadow-md hover:from-teal-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
             >
-              {loading ? "?? ?..." : "????"}
+              {loading ? "처리 중..." : "회원가입"}
             </button>
           </div>
         </form>
