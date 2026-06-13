@@ -1,0 +1,91 @@
+import logging
+import firebase_admin
+from firebase_admin import credentials, messaging
+from config import get_settings
+
+logger = logging.getLogger(__name__)
+settings = get_settings()
+
+
+class FirebaseService:
+    """Firebase Cloud Messaging service"""
+    
+    _initialized = False
+    
+    @classmethod
+    def initialize(cls):
+        """Initialize Firebase Admin SDK"""
+        if not cls._initialized:
+            try:
+                logger.info("Initializing Firebase Admin SDK...")
+                cred = credentials.Certificate(settings.firebase_credentials_path)
+                firebase_admin.initialize_app(cred)
+                cls._initialized = True
+                logger.info("Firebase Admin SDK initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize Firebase Admin SDK: {e}")
+                raise
+    
+    @classmethod
+    async def send_notification(cls, token: str, title: str, body: str, data: dict = None):
+        """Send push notification to a single device"""
+        if not cls._initialized:
+            cls.initialize()
+        
+        try:
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                ),
+                data=data or {},
+                token=token,
+            )
+            
+            response = messaging.send(message)
+            logger.info(f"Notification sent successfully: {response}")
+            return True
+        except messaging.UnregisteredError:
+            logger.warning(f"Token is invalid or unregistered: {token}")
+            # TODO: Remove invalid token from database
+            return False
+        except Exception as e:
+            logger.error(f"Error sending notification: {e}")
+            return False
+    
+    @classmethod
+    async def send_multicast(cls, tokens: list[str], title: str, body: str, data: dict = None):
+        """Send push notification to multiple devices"""
+        if not cls._initialized:
+            cls.initialize()
+        
+        if not tokens:
+            logger.warning("No tokens provided for multicast")
+            return
+        
+        try:
+            message = messaging.MulticastMessage(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                ),
+                data=data or {},
+                tokens=tokens,
+            )
+            
+            response = messaging.send_multicast(message)
+            logger.info(f"Multicast sent: {response.success_count} succeeded, {response.failure_count} failed")
+            
+            # Handle failed tokens
+            if response.failure_count > 0:
+                failed_tokens = []
+                for idx, result in enumerate(response.responses):
+                    if not result.success:
+                        failed_tokens.append(tokens[idx])
+                        logger.warning(f"Failed to send to token: {tokens[idx]}, error: {result.exception}")
+                # TODO: Remove failed tokens from database
+            
+            return response
+        except Exception as e:
+            logger.error(f"Error sending multicast notification: {e}")
+            return None

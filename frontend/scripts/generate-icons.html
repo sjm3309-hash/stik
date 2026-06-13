@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Generate Stik Icons</title>
+</head>
+<body>
+    <h1>Stik 아이콘 생성기</h1>
+    <p>아래 버튼을 클릭하여 아이콘을 다운로드하세요:</p>
+    <button onclick="generateIcon(192)">192x192 아이콘 다운로드</button>
+    <button onclick="generateIcon(512)">512x512 아이콘 다운로드</button>
+    
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script>
+        function generateIcon(size) {
+            const canvas = document.getElementById('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#000000');
+            gradient.addColorStop(1, '#1a1a1a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Draw "S" text
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${size * 0.6}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('S', size / 2, size / 2);
+
+            // Add accent circle
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = size * 0.05;
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, size * 0.4, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Download
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `icon-${size}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
+    </script>
+</body>
+</html>
