@@ -79,13 +79,12 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
   function handleDaySelect(day: string) {
     setSelectedDay(day);
     setDayDropdownOpen(false);
-    const timeframeMap: Record<string, string> = {
-      "?": "1d",
-      "?": "1w",
-      "?": "1M",
-      "?": "1Y",
-    };
-    setTimeframe(timeframeMap[day]);
+    let timeframe = "1d";
+    if (day === "?") timeframe = "1d";
+    else if (day === "?") timeframe = "1w";
+    else if (day === "?") timeframe = "1M";
+    else if (day === "?") timeframe = "1Y";
+    setTimeframe(timeframe);
   }
 
   // ?? ??
