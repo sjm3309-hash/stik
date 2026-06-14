@@ -1,39 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("");
+export default function UpdatePasswordPage() {
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isValidSession, setIsValidSession] = useState(false);
   const router = useRouter();
 
-  async function handleLogin(e: React.FormEvent) {
+  useEffect(() => {
+    // 세션 확인
+    const checkSession = async () => {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsValidSession(!!session);
+    };
+    checkSession();
+  }, []);
+
+  async function handleUpdatePassword(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    if (password !== confirmPassword) {
+      setError("비밀번호가 일치하지 않습니다.");
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("비밀번호는 최소 6자 이상이어야 합니다.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const supabase = getSupabaseClient();
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { error } = await supabase.auth.updateUser({
+        password: password,
       });
 
       if (error) {
         throw error;
       }
 
-      router.push("/");
+      alert("비밀번호가 성공적으로 변경되었습니다.");
+      router.push("/login");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "로그인 중 오류가 발생했습니다.");
+      setError(err instanceof Error ? err.message : "비밀번호 변경 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!isValidSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-blue-50 to-gray-50">
+        <div className="text-center">
+          <p className="text-gray-600">세션을 확인하는 중...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -49,62 +81,50 @@ export default function LoginPage() {
           <h1 className="text-4xl font-black bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
             Stik
           </h1>
-          <p className="mt-2 text-sm text-gray-500">주식 알림 서비스</p>
         </div>
 
         <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-gray-200">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
-              로그인
+              새 비밀번호 설정
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              계정이 없으신가요?{" "}
-              <Link href="/signup" className="font-semibold text-teal-600 hover:text-teal-700 transition-colors">
-                회원가입
-              </Link>
+              새로운 비밀번호를 입력해주세요.
             </p>
           </div>
 
-          <form className="space-y-5" onSubmit={handleLogin}>
+          <form className="space-y-5" onSubmit={handleUpdatePassword}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
-                이메일
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+                새 비밀번호
               </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                placeholder="example@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  비밀번호
-                </label>
-                <Link
-                  href="/reset-password"
-                  className="text-xs font-medium text-teal-600 hover:text-teal-700 transition-colors"
-                >
-                  비밀번호를 잊으셨나요?
-                </Link>
-              </div>
               <input
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
                 className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                placeholder="비밀번호"
+                placeholder="비밀번호 (6자 이상)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
+                비밀번호 확인
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                required
+                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                placeholder="비밀번호 확인"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </div>
 
@@ -119,29 +139,9 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white bg-gradient-to-r from-teal-500 to-blue-600 shadow-md hover:from-teal-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {loading ? "로그인 중..." : "로그인"}
+              {loading ? "변경 중..." : "비밀번호 변경"}
             </button>
           </form>
-
-          {/* 구분선 */}
-          <div className="mt-6 relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="px-2 bg-white text-gray-500">또는</span>
-            </div>
-          </div>
-
-          {/* 회원가입 버튼 */}
-          <div className="mt-6">
-            <Link
-              href="/signup"
-              className="w-full flex justify-center py-3 px-4 border-2 border-teal-500 text-sm font-semibold rounded-lg text-teal-600 bg-white hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all"
-            >
-              새 계정 만들기
-            </Link>
-          </div>
         </div>
       </div>
     </div>

@@ -107,23 +107,36 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            회원가입
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            이미 계정이 있으신가요?{" "}
-            <a href="/login" className="font-medium text-teal-600 hover:text-teal-500">
-              로그인
-            </a>
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-blue-50 to-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full">
+        {/* 로고 */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-teal-500 to-blue-600 rounded-2xl mb-4 shadow-lg">
+            <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+          </div>
+          <h1 className="text-4xl font-black bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
+            Stik
+          </h1>
+          <p className="mt-2 text-sm text-gray-500">주식 알림 서비스</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSignup}>
-          <div className="rounded-md shadow-sm space-y-4">
+
+        <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-gray-200">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              회원가입
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              이미 계정이 있으신가요?{" "}
+              <a href="/login" className="font-semibold text-teal-600 hover:text-teal-700 transition-colors">
+                로그인
+              </a>
+            </p>
+          </div>
+          <form className="space-y-5" onSubmit={handleSignup}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
                 이메일
               </label>
               <input
@@ -132,14 +145,14 @@ export default function SignupPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-teal-500 focus:border-teal-500 focus:z-10 sm:text-sm"
+                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
                 placeholder="example@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
                 비밀번호
               </label>
               <input
@@ -148,13 +161,12 @@ export default function SignupPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-teal-500 focus:border-teal-500 focus:z-10 sm:text-sm"
+                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
                 placeholder="비밀번호 (6자 이상)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-          </div>
 
           {/* 약관 동의 섹션 */}
           <div className="border-2 border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50">
@@ -250,21 +262,20 @@ export default function SignupPage() {
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
+            <div className="rounded-lg bg-red-50 border border-red-200 p-4">
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading || !serviceTerms || !privacyTerms || !pushTerms}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-teal-500 to-blue-600 shadow-md hover:from-teal-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              {loading ? "처리 중..." : "회원가입"}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading || !serviceTerms || !privacyTerms || !pushTerms}
+            className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white bg-gradient-to-r from-teal-500 to-blue-600 shadow-md hover:from-teal-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {loading ? "처리 중..." : "회원가입"}
+          </button>
         </form>
+        </div>
       </div>
 
       {/* 약관 모달 */}
