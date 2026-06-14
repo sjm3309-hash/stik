@@ -27,12 +27,37 @@ class FirebaseService:
                 raise
     
     @classmethod
-    async def send_notification(cls, token: str, title: str, body: str, data: dict = None):
-        """Send push notification to a single device"""
+    async def send_notification(cls, token: str, title: str, body: str, data: dict = None,
+                                 sound_enabled: bool = True, vibrate_enabled: bool = True):
+        """Send push notification to a single device with custom sound/vibration"""
         if not cls._initialized:
             cls.initialize()
         
         try:
+            # Build Android config with sound and vibration settings
+            android_config = messaging.AndroidConfig(
+                priority='high',
+                notification=messaging.AndroidNotification(
+                    sound='default' if sound_enabled else None,
+                    # Vibration pattern: [delay, vibrate, sleep, vibrate, ...]
+                    vibrate_timings_millis=[0, 500, 250, 500] if vibrate_enabled else None,
+                    channel_id='stock_alerts'
+                )
+            )
+            
+            # Build APNS config for iOS
+            apns_config = messaging.APNSConfig(
+                payload=messaging.APNSPayload(
+                    aps=messaging.Aps(
+                        sound=messaging.CriticalSound(
+                            name='default' if sound_enabled else None,
+                            critical=False
+                        ) if sound_enabled else None,
+                        # iOS handles vibration automatically with sound
+                    )
+                )
+            )
+            
             message = messaging.Message(
                 notification=messaging.Notification(
                     title=title,
@@ -40,6 +65,8 @@ class FirebaseService:
                 ),
                 data=data or {},
                 token=token,
+                android=android_config,
+                apns=apns_config
             )
             
             response = messaging.send(message)

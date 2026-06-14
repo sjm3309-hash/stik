@@ -110,6 +110,15 @@ export default function DashboardPage() {
             </h1>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
+            <a
+              href="/history"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="hidden sm:inline">히스토리</span>
+            </a>
             <span className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 truncate max-w-[200px]">
               {user?.email}
             </span>

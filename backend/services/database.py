@@ -46,19 +46,26 @@ class Database:
             return []
     
     @classmethod
-    async def save_alert_history(cls, alert_id: str, user_id: str, symbol: str, 
-                                  signal_type: str, indicator: str, price: float, message: str):
-        """Save alert notification to history"""
+    async def save_alert_history(cls, alert_id: str, user_id: str, ticker: str, 
+                                  timeframe: str, indicator: str, condition: str,
+                                  trigger_price: float, signal_type: str, message: str,
+                                  notification_sent: bool = True):
+        """Save alert notification to history (new schema)"""
         try:
             client = cls.get_client()
+            from datetime import datetime
             data = {
                 "alert_id": alert_id,
                 "user_id": user_id,
-                "symbol": symbol,
-                "signal_type": signal_type,
+                "ticker": ticker,
+                "timeframe": timeframe,
                 "indicator": indicator,
-                "price": price,
-                "message": message
+                "condition": condition,
+                "trigger_price": trigger_price,
+                "signal_type": signal_type,
+                "message": message,
+                "notification_sent": notification_sent,
+                "triggered_at": datetime.utcnow().isoformat()
             }
             response = client.table("alert_history").insert(data).execute()
             logger.info(f"Alert history saved: {alert_id}")
@@ -68,16 +75,32 @@ class Database:
             return None
     
     @classmethod
-    async def update_alert_trigger(cls, alert_id: str):
-        """Update alert last triggered timestamp"""
+    async def update_alert_last_triggered(cls, alert_id: str):
+        """Update alert last triggered timestamp (for cooldown)"""
         try:
             client = cls.get_client()
             from datetime import datetime
             response = client.table("alerts").update({
-                "last_triggered_at": datetime.utcnow().isoformat(),
-                "trigger_count": client.rpc("increment_trigger_count", {"alert_id": alert_id})
+                "last_triggered_at": datetime.utcnow().isoformat()
             }).eq("id", alert_id).execute()
+            logger.info(f"Alert {alert_id} last_triggered_at updated")
             return response.data
         except Exception as e:
-            logger.error(f"Error updating alert trigger: {e}")
+            logger.error(f"Error updating alert last triggered: {e}")
             return None
+    
+    @classmethod
+    async def get_alert_history(cls, user_id: str, limit: int = 50):
+        """Get alert history for a user"""
+        try:
+            client = cls.get_client()
+            response = client.table("alert_history")\
+                .select("*")\
+                .eq("user_id", user_id)\
+                .order("triggered_at", desc=True)\
+                .limit(limit)\
+                .execute()
+            return response.data
+        except Exception as e:
+            logger.error(f"Error fetching alert history: {e}")
+            return []

@@ -13,12 +13,11 @@ logger = logging.getLogger(__name__)
 class AlertChecker:
     """Check alert conditions and trigger notifications"""
     
-    # Cache to prevent duplicate alerts (symbol + alert_id + signal)
-    _recent_alerts = {}
-    _cooldown_minutes = 60  # Don't send same alert within 60 minutes
+    # NOTE: Cooldown is now managed per-alert in database (cooldown_period column)
+    # This cache is kept for backward compatibility but not used
     
     @classmethod
-    async def _check_target_price_alert(cls, alert: Dict[str, Any], alert_id: str, user_id: str, symbol: str, cache_key: str):
+    async def _check_target_price_alert(cls, alert: Dict[str, Any], alert_id: str, user_id: str, symbol: str):
         """Check target price alert"""
         parameters = alert.get('parameters', {}).get('target_price', {})
         buy_price = parameters.get('buy_price')
@@ -39,6 +38,7 @@ class AlertChecker:
         if enable_buy and buy_price and current_price <= buy_price:
             logger.info(f"Buy target price reached: {current_price} <= {buy_price}")
             await NotificationSender.send_alert_notification(
+                alert=alert,
                 alert_id=alert_id,
                 user_id=user_id,
                 symbol=symbol,
@@ -47,7 +47,6 @@ class AlertChecker:
                 price=current_price,
                 timeframe=timeframe
             )
-            cls._recent_alerts[cache_key] = datetime.now()
             return
         
         # Check sell target price
@@ -55,6 +54,7 @@ class AlertChecker:
         if enable_sell and sell_price and current_price >= sell_price:
             logger.info(f"Sell target price reached: {current_price} >= {sell_price}")
             await NotificationSender.send_alert_notification(
+                alert=alert,
                 alert_id=alert_id,
                 user_id=user_id,
                 symbol=symbol,
@@ -63,7 +63,6 @@ class AlertChecker:
                 price=current_price,
                 timeframe=timeframe
             )
-            cls._recent_alerts[cache_key] = datetime.now()
     
     @classmethod
     async def check_all_alerts(cls):
@@ -96,17 +95,35 @@ class AlertChecker:
         
         logger.info(f"Checking alert {alert_id}: {symbol} {timeframe} {indicator}")
         
-        # Check cooldown to prevent duplicate alerts
-        cache_key = f"{alert_id}_{indicator}"
-        if cache_key in cls._recent_alerts:
-            last_sent = cls._recent_alerts[cache_key]
-            if datetime.now() - last_sent < timedelta(minutes=cls._cooldown_minutes):
-                logger.debug(f"Alert {alert_id} is in cooldown period, skipping")
+        # Check database-based cooldown (prevents duplicate alerts)
+        cooldown_period = alert.get('cooldown_period', 0)  # in minutes
+        last_triggered_at = alert.get('last_triggered_at')
+        
+        if cooldown_period > 0 and last_triggered_at:
+            from datetime import timezone
+            # Parse last_triggered_at
+            if isinstance(last_triggered_at, str):
+                from dateutil import parser
+                last_triggered_dt = parser.parse(last_triggered_at)
+            else:
+                last_triggered_dt = last_triggered_at
+            
+            # Make timezone-aware if needed
+            if last_triggered_dt.tzinfo is None:
+                last_triggered_dt = last_triggered_dt.replace(tzinfo=timezone.utc)
+            
+            now = datetime.now(timezone.utc)
+            elapsed_minutes = (now - last_triggered_dt).total_seconds() / 60
+            
+            if elapsed_minutes < cooldown_period:
+                logger.info(f"Alert {alert_id} is in cooldown ({elapsed_minutes:.1f}/{cooldown_period} min), skipping")
                 return
+            else:
+                logger.info(f"Alert {alert_id} cooldown expired ({elapsed_minutes:.1f}/{cooldown_period} min), checking...")
         
         # Special handling for target_price indicator
         if indicator == 'target_price':
-            await cls._check_target_price_alert(alert, alert_id, user_id, symbol, cache_key)
+            await cls._check_target_price_alert(alert, alert_id, user_id, symbol)
             return
         
         # Fetch stock data
@@ -153,8 +170,9 @@ class AlertChecker:
             # Get latest price
             price = DataFetcher.get_latest_price(symbol)
             
-            # Send notification
+            # Send notification (will update last_triggered_at automatically)
             await NotificationSender.send_alert_notification(
+                alert=alert,
                 alert_id=alert_id,
                 user_id=user_id,
                 symbol=symbol,
@@ -163,9 +181,3 @@ class AlertChecker:
                 price=price,
                 timeframe=timeframe
             )
-            
-            # Update cooldown
-            cls._recent_alerts[cache_key] = datetime.now()
-            
-            # Update alert trigger in database
-            await Database.update_alert_trigger(alert_id)

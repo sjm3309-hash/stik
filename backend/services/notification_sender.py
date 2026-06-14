@@ -73,7 +73,7 @@ class NotificationSender:
         return timeframe_map.get(timeframe, timeframe)
     
     @classmethod
-    async def send_alert_notification(cls, alert_id: str, user_id: str, symbol: str,
+    async def send_alert_notification(cls, alert: dict, alert_id: str, user_id: str, symbol: str,
                                        signal_type: str, indicator: str, price: Optional[float],
                                        timeframe: str):
         """Send alert notification to user"""
@@ -85,6 +85,10 @@ class NotificationSender:
             if not tokens:
                 logger.warning(f"No FCM tokens found for user {user_id}")
                 return
+            
+            # Get notification settings
+            sound_enabled = alert.get('sound_enabled', True)
+            vibrate_enabled = alert.get('vibrate_enabled', True)
             
             # Build notification message
             stock_name = cls.get_stock_name(symbol)
@@ -110,23 +114,50 @@ class NotificationSender:
                 'timestamp': str(int(datetime.now().timestamp()))
             }
             
-            # Send notification (use only the first/most recent token)
-            success = await FirebaseService.send_notification(tokens[0], title, body, data)
+            # Send notification with custom sound/vibration settings
+            success = await FirebaseService.send_notification(
+                token=tokens[0],
+                title=title,
+                body=body,
+                data=data,
+                sound_enabled=sound_enabled,
+                vibrate_enabled=vibrate_enabled
+            )
             
             if success:
                 # Save to alert history
                 await Database.save_alert_history(
                     alert_id=alert_id,
                     user_id=user_id,
-                    symbol=symbol,
-                    signal_type=signal_type,
+                    ticker=symbol,
+                    timeframe=timeframe,
                     indicator=indicator,
-                    price=price or 0.0,
-                    message=f"{title} - {body}"
+                    condition=signal_type,
+                    trigger_price=price or 0.0,
+                    signal_type=signal_type,
+                    message=f"{title} - {body}",
+                    notification_sent=True
                 )
+                
+                # Update last_triggered_at in alerts table
+                await Database.update_alert_last_triggered(alert_id)
+                
                 logger.info(f"Notification sent successfully for alert {alert_id}")
             else:
                 logger.error(f"Failed to send notification for alert {alert_id}")
+                # Still save to history but mark as failed
+                await Database.save_alert_history(
+                    alert_id=alert_id,
+                    user_id=user_id,
+                    ticker=symbol,
+                    timeframe=timeframe,
+                    indicator=indicator,
+                    condition=signal_type,
+                    trigger_price=price or 0.0,
+                    signal_type=signal_type,
+                    message=f"{title} - {body}",
+                    notification_sent=False
+                )
                 
         except Exception as e:
             logger.error(f"Error sending alert notification: {e}")
