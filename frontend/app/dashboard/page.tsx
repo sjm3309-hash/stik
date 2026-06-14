@@ -101,17 +101,17 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black">
       <NotificationSetup />
-      <header className="border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="mx-auto flex max-w-6xl items-center justify-between">
+      <header className="border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Stik Logo" className="h-10 w-10" />
-            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-blue-600">
+            <img src="/logo.png" alt="Stik Logo" className="h-8 w-8 sm:h-10 sm:w-10" />
+            <h1 className="text-2xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-blue-600">
               Stik
             </h1>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-zinc-600 dark:text-zinc-400">
-              {user?.email} ({profile?.subscription_type === "premium" ? "프리미엄" : "무료"})
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 truncate max-w-[200px]">
+              {user?.email}
             </span>
             <AuthButton />
           </div>
