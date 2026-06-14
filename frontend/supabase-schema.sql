@@ -7,6 +7,10 @@ CREATE TABLE IF NOT EXISTS profiles (
   user_id UUID NOT NULL UNIQUE,
   subscription_type TEXT DEFAULT 'free' CHECK (subscription_type IN ('free', 'premium')),
   role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+  terms_agreed BOOLEAN DEFAULT false,
+  privacy_agreed BOOLEAN DEFAULT false,
+  push_agreed BOOLEAN DEFAULT false,
+  agreed_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
