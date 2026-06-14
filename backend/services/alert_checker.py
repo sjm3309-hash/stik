@@ -95,10 +95,12 @@ class AlertChecker:
         
         logger.info(f"Checking alert {alert_id}: {symbol} {timeframe} {indicator}")
         
-        # Check database-based cooldown (prevents duplicate alerts)
-        cooldown_period = alert.get('cooldown_period', 0)  # in minutes
+        # Get user's global settings for cooldown
+        user_profile = await Database.get_user_profile(user_id)
+        cooldown_period = user_profile.get('global_cooldown_minutes', 0) if user_profile else 0
         last_triggered_at = alert.get('last_triggered_at')
         
+        # Check cooldown (prevents duplicate alerts based on user's global setting)
         if cooldown_period > 0 and last_triggered_at:
             from datetime import timezone
             # Parse last_triggered_at

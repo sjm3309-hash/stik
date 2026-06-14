@@ -30,11 +30,6 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
   const [showIndicatorSettings, setShowIndicatorSettings] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Advanced notification settings
-  const [cooldownPeriod, setCooldownPeriod] = useState(0); // 0=없음, 1=1분, 5=5분, 10=10분, 60=1시간, 1440=1일
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [vibrateEnabled, setVibrateEnabled] = useState(true);
 
   const [parameters, setParameters] = useState<Record<string, any>>({
     disparity: { ma_period: 20, overheat: 105, chill: 95 },
@@ -168,9 +163,6 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
         ma_short_period: parameters.ma.short_period,
         ma_long_period: parameters.ma.long_period,
         parameters: parameters,
-        cooldown_period: cooldownPeriod,
-        sound_enabled: soundEnabled,
-        vibrate_enabled: vibrateEnabled,
       });
 
       if (error) {
@@ -738,60 +730,6 @@ export default function AlertForm({ profile, alertCount, canAddAlert, onAlertCre
           <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
             둘 다 선택하거나, 하나만 선택할 수 있습니다
           </p>
-        </div>
-
-        {/* 중복 알림 제한 */}
-        <div>
-          <label htmlFor="cooldown" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-            중복 알림 제한
-          </label>
-          <select
-            id="cooldown"
-            value={cooldownPeriod}
-            onChange={(e) => setCooldownPeriod(parseInt(e.target.value))}
-            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-          >
-            <option value={0}>제한 없음 (추세 변화마다 알림)</option>
-            <option value={1}>1분</option>
-            <option value={5}>5분</option>
-            <option value={10}>10분</option>
-            <option value={60}>1시간</option>
-            <option value={1440}>1일</option>
-          </select>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            같은 조건에 대해 설정된 시간 동안 중복 알림을 받지 않습니다
-          </p>
-        </div>
-
-        {/* 소리 및 진동 설정 */}
-        <div>
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-            알림 소리 및 진동
-          </label>
-          <div className="space-y-2">
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={soundEnabled}
-                onChange={(e) => setSoundEnabled(e.target.checked)}
-                className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-2 focus:ring-teal-500 cursor-pointer"
-              />
-              <span className="ml-2.5 text-sm text-zinc-700 dark:text-zinc-300">
-                알림 소리 활성화
-              </span>
-            </label>
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={vibrateEnabled}
-                onChange={(e) => setVibrateEnabled(e.target.checked)}
-                className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-2 focus:ring-teal-500 cursor-pointer"
-              />
-              <span className="ml-2.5 text-sm text-zinc-700 dark:text-zinc-300">
-                알림 진동 활성화
-              </span>
-            </label>
-          </div>
         </div>
 
         <button

@@ -104,3 +104,18 @@ class Database:
         except Exception as e:
             logger.error(f"Error fetching alert history: {e}")
             return []
+    
+    @classmethod
+    async def get_user_profile(cls, user_id: str):
+        """Get user profile with settings"""
+        try:
+            client = cls.get_client()
+            response = client.table("profiles")\
+                .select("*")\
+                .eq("user_id", user_id)\
+                .single()\
+                .execute()
+            return response.data
+        except Exception as e:
+            logger.error(f"Error fetching user profile: {e}")
+            return None

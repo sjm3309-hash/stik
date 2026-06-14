@@ -86,9 +86,10 @@ class NotificationSender:
                 logger.warning(f"No FCM tokens found for user {user_id}")
                 return
             
-            # Get notification settings
-            sound_enabled = alert.get('sound_enabled', True)
-            vibrate_enabled = alert.get('vibrate_enabled', True)
+            # Get user's global notification settings
+            user_profile = await Database.get_user_profile(user_id)
+            sound_enabled = user_profile.get('sound_enabled', True) if user_profile else True
+            vibrate_enabled = user_profile.get('vibrate_enabled', True) if user_profile else True
             
             # Build notification message
             stock_name = cls.get_stock_name(symbol)
