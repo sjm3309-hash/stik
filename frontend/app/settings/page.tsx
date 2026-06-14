@@ -42,24 +42,49 @@ export default function SettingsPage() {
   async function loadSettings(userId: string) {
     try {
       const supabase = getSupabaseClient();
+      
+      // First check if profile exists
       const { data, error } = await supabase
         .from("profiles")
-        .select("sound_enabled, vibrate_enabled, global_cooldown_minutes")
+        .select("*")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows returned, which is fine
+        throw error;
+      }
       
       if (data) {
+        // Use default values if columns don't exist yet
         setSettings({
-          sound_enabled: data.sound_enabled ?? true,
-          vibrate_enabled: data.vibrate_enabled ?? true,
-          global_cooldown_minutes: data.global_cooldown_minutes ?? 0,
+          sound_enabled: data.sound_enabled !== undefined ? data.sound_enabled : true,
+          vibrate_enabled: data.vibrate_enabled !== undefined ? data.vibrate_enabled : true,
+          global_cooldown_minutes: data.global_cooldown_minutes !== undefined ? data.global_cooldown_minutes : 0,
         });
+      } else {
+        // Profile doesn't exist, create it with defaults
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert({
+            user_id: userId,
+            subscription_type: "free",
+            role: "user",
+            sound_enabled: true,
+            vibrate_enabled: true,
+            global_cooldown_minutes: 0,
+          });
+        
+        if (insertError) {
+          console.error("Failed to create profile:", insertError);
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to load settings:", error);
-      setMessage({ type: "error", text: "설정을 불러오는데 실패했습니다." });
+      // Only show error if it's not a missing column error
+      if (!error.message?.includes('column') && !error.message?.includes('does not exist')) {
+        setMessage({ type: "error", text: "설정을 불러오는데 실패했습니다. DB 마이그레이션을 실행해주세요." });
+      }
     } finally {
       setLoading(false);
     }
