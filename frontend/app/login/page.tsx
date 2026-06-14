@@ -29,8 +29,23 @@ export default function LoginPage() {
       }
 
       router.push("/");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "로그인 중 오류가 발생했습니다.");
+    } catch (err: any) {
+      // 에러 메시지 한글화
+      let errorMessage = "로그인 중 오류가 발생했습니다.";
+      
+      if (err.message?.includes("Invalid login credentials")) {
+        errorMessage = "이메일 또는 비밀번호가 올바르지 않습니다.";
+      } else if (err.message?.includes("Email not confirmed")) {
+        errorMessage = "이메일 인증이 필요합니다.";
+      } else if (err.message?.includes("Invalid email")) {
+        errorMessage = "올바른 이메일 형식이 아닙니다.";
+      } else if (err.message?.includes("User not found")) {
+        errorMessage = "등록되지 않은 이메일입니다.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

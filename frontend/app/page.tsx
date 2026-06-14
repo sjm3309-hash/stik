@@ -20,6 +20,11 @@ export default function Home() {
       } = await supabase.auth.getUser();
       setUser(user);
       setLoading(false);
+      
+      // Redirect logged-in users to dashboard
+      if (user) {
+        router.push("/dashboard");
+      }
     }
 
     getUser();
@@ -29,10 +34,14 @@ export default function Home() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      // Redirect on login
+      if (session?.user) {
+        router.push("/dashboard");
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [router]);
 
   if (loading) {
     return (
@@ -58,7 +67,10 @@ export default function Home() {
     );
   }
 
-  // Redirect logged-in users to dashboard
-  router.push("/dashboard");
-  return null;
+  // User is logged in, will redirect via useEffect
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
+      <div className="text-zinc-600 dark:text-zinc-400">대시보드로 이동 중...</div>
+    </div>
+  );
 }

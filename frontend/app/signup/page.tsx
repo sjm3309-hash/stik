@@ -9,6 +9,7 @@ import { ServiceTermsContent, PrivacyTermsContent, PushTermsContent } from "@/co
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -58,6 +59,20 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
 
+    // 비밀번호 확인
+    if (password !== passwordConfirm) {
+      setError("비밀번호가 일치하지 않습니다.");
+      setLoading(false);
+      return;
+    }
+
+    // 비밀번호 길이 확인
+    if (password.length < 6) {
+      setError("비밀번호는 최소 6자 이상이어야 합니다.");
+      setLoading(false);
+      return;
+    }
+
     // 약관 동의 확인
     if (!serviceTerms || !privacyTerms || !pushTerms) {
       setError("모든 필수 약관에 동의해주세요.");
@@ -95,12 +110,33 @@ export default function SignupPage() {
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
+        console.error("Error details:", {
+          message: profileError.message,
+          details: profileError.details,
+          hint: profileError.hint,
+          code: profileError.code
+        });
         // 프로필 생성 실패해도 회원가입은 성공했으므로 진행
+      } else {
+        console.log("Profile created successfully!");
       }
 
       router.push("/login?message=회원가입이 완료되었습니다. 로그인해주세요.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "회원가입 중 오류가 발생했습니다.");
+    } catch (err: any) {
+      // 에러 메시지 한글화
+      let errorMessage = "회원가입 중 오류가 발생했습니다.";
+      
+      if (err.message?.includes("already registered")) {
+        errorMessage = "이미 등록된 이메일입니다.";
+      } else if (err.message?.includes("Email rate limit")) {
+        errorMessage = "이메일 전송 한도를 초과했습니다. 잠시 후 다시 시도해주세요.";
+      } else if (err.message?.includes("Invalid email")) {
+        errorMessage = "올바른 이메일 형식이 아닙니다.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -165,6 +201,22 @@ export default function SignupPage() {
                 placeholder="비밀번호 (6자 이상)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="password-confirm" className="block text-sm font-medium text-gray-700 mb-1.5">
+                비밀번호 확인
+              </label>
+              <input
+                id="password-confirm"
+                name="password-confirm"
+                type="password"
+                autoComplete="new-password"
+                required
+                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                placeholder="비밀번호 재입력"
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
               />
             </div>
 
