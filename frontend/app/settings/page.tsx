@@ -14,7 +14,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<UserSettings>({
     sound_enabled: true,
     vibrate_enabled: true,
-    global_cooldown_minutes: 0,
+    global_cooldown_minutes: 1,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -60,7 +60,7 @@ export default function SettingsPage() {
         setSettings({
           sound_enabled: data.sound_enabled !== undefined ? data.sound_enabled : true,
           vibrate_enabled: data.vibrate_enabled !== undefined ? data.vibrate_enabled : true,
-          global_cooldown_minutes: data.global_cooldown_minutes !== undefined ? data.global_cooldown_minutes : 0,
+          global_cooldown_minutes: data.global_cooldown_minutes !== undefined ? data.global_cooldown_minutes : 1,
         });
       } else {
         // Profile doesn't exist, create it with defaults
@@ -72,7 +72,7 @@ export default function SettingsPage() {
             role: "user",
             sound_enabled: true,
             vibrate_enabled: true,
-            global_cooldown_minutes: 0,
+            global_cooldown_minutes: 1,
           });
         
         if (insertError) {
@@ -243,7 +243,6 @@ export default function SettingsPage() {
                 onChange={(e) => setSettings({ ...settings, global_cooldown_minutes: parseInt(e.target.value) })}
                 className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
               >
-                <option value={0}>제한 없음 (추세 변화마다 알림)</option>
                 <option value={1}>1분</option>
                 <option value={5}>5분</option>
                 <option value={10}>10분</option>

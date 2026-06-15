@@ -90,6 +90,20 @@ class Database:
             return None
     
     @classmethod
+    async def update_alert_state(cls, alert_id: str, state: str):
+        """Update alert last state (for preventing duplicate signals)"""
+        try:
+            client = cls.get_client()
+            response = client.table("alerts").update({
+                "last_state": state
+            }).eq("id", alert_id).execute()
+            logger.info(f"Alert {alert_id} state updated to: {state}")
+            return response.data
+        except Exception as e:
+            logger.error(f"Error updating alert state: {e}")
+            return None
+    
+    @classmethod
     async def get_alert_history(cls, user_id: str, limit: int = 50):
         """Get alert history for a user"""
         try:

@@ -44,6 +44,33 @@ class IndicatorCalculator:
             return None
     
     @staticmethod
+    def get_macd_state(df: pd.DataFrame, macd_col: str = 'MACD_12_26_9',
+                      signal_col: str = 'MACDs_12_26_9',
+                      threshold: float = 0.01) -> Optional[str]:
+        """
+        Get current MACD state (not cross event, but current state)
+        
+        Returns:
+            'bullish' (MACD above Signal), 'bearish' (MACD below Signal), or None
+        """
+        try:
+            if len(df) < 1:
+                return None
+            
+            curr = df.iloc[-1]
+            curr_diff = curr[macd_col] - curr[signal_col]
+            
+            if curr_diff > threshold:
+                return 'bullish'
+            elif curr_diff < -threshold:
+                return 'bearish'
+            else:
+                return None  # Too close to call
+        except Exception as e:
+            logger.error(f"Error getting MACD state: {e}")
+            return None
+    
+    @staticmethod
     def detect_macd_cross(df: pd.DataFrame, macd_col: str = 'MACD_12_26_9', 
                          signal_col: str = 'MACDs_12_26_9', 
                          threshold: float = 0.01) -> Optional[str]:
@@ -412,9 +439,12 @@ class IndicatorCalculator:
                 macd_df = IndicatorCalculator.calculate_macd(df, fast, slow, signal)
                 if macd_df is not None:
                     df = pd.concat([df, macd_df], axis=1)
+                    # Get current state
+                    current_state = IndicatorCalculator.get_macd_state(df)
+                    # Check for cross event
                     cross = IndicatorCalculator.detect_macd_cross(df)
                     if cross:
-                        return {'signal': cross, 'indicator': 'macd'}
+                        return {'signal': cross, 'indicator': 'macd', 'current_state': current_state}
             
             elif indicator == 'rsi':
                 period = parameters.get('period', 14)

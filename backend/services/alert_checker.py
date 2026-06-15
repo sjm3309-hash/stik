@@ -208,7 +208,25 @@ class AlertChecker:
         
         if result:
             signal_type = result['signal']
-            logger.info(f"Signal detected for alert {alert_id}: {signal_type}")
+            current_state = result.get('current_state')  # Get current state for MACD
+            logger.info(f"Signal detected for alert {alert_id}: {signal_type}, Current state: {current_state}")
+
+            # State-based filtering: Only for minute/hour timeframes (candle close based)
+            # Daily/Weekly use current price, so no state filtering
+            is_intraday = timeframe in ['1m', '3m', '5m', '10m', '15m', '30m', '1h']
+            
+            if current_state and is_intraday:
+                last_state = alert.get('last_state')
+                logger.info(f"State check (intraday) - Last: {last_state}, Current: {current_state}")
+
+                if last_state == current_state:
+                    logger.info(f"State unchanged ({current_state}), skipping duplicate signal")
+                    return
+
+                # Update state in DB
+                await Database.update_alert_state(alert_id, current_state)
+            else:
+                logger.info(f"Daily/Weekly timeframe - using real-time price, no state filtering")
             
             # Check if user wants this signal type
             enable_buy = alert.get('enable_buy_signal', True)

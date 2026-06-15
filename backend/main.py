@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import get_settings
 from services.scheduler import AlertScheduler
 from services.data_fetcher import DataFetcher
+# Explicitly import notification_sender to load stock names at startup
+import services.notification_sender
 
 # Configure logging
 logging.basicConfig(
@@ -23,6 +25,12 @@ logger.info(f"[DEBUG] Loaded SUPABASE_SERVICE_KEY: {'****' + settings.supabase_s
 async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     logger.info("Starting Stik Alert Service...")
+    
+    # Verify stock names are loaded
+    from services.notification_sender import _STOCK_NAMES_CACHE
+    logger.info(f"✅ Stock names cache loaded: {len(_STOCK_NAMES_CACHE)} entries")
+    if len(_STOCK_NAMES_CACHE) == 0:
+        logger.error("❌ CRITICAL: Stock names cache is empty!")
     
     # Start scheduler
     scheduler = AlertScheduler()

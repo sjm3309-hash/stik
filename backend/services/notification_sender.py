@@ -1,4 +1,6 @@
 import logging
+import json
+import os
 from typing import Optional
 
 from services.database import Database
@@ -6,22 +8,25 @@ from services.firebase_service import FirebaseService
 
 logger = logging.getLogger(__name__)
 
+# Load stock names from JSON file at module import time
+def _load_stock_names_at_import():
+    """Load stock names from JSON file when module is imported"""
+    try:
+        json_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'stock_names.json')
+        with open(json_path, 'r', encoding='utf-8') as f:
+            stock_names = json.load(f)
+        logger.info(f"✅ Successfully loaded {len(stock_names)} stock names from {json_path}")
+        return stock_names
+    except Exception as e:
+        logger.error(f"❌ CRITICAL: Failed to load stock_names.json: {e}")
+        return {}
+
+# Global stock names cache - loaded once when module is imported
+_STOCK_NAMES_CACHE = _load_stock_names_at_import()
+
 
 class NotificationSender:
     """Handle notification sending logic"""
-    
-    # Korean stock name mapping (예시, 실제로는 DB나 API에서 가져와야 함)
-    STOCK_NAMES = {
-        '005930.KS': '삼성전자',
-        '000660.KS': 'SK하이닉스',
-        '035420.KS': 'NAVER',
-        '035720.KS': '카카오',
-        # US stocks
-        'AAPL': 'Apple',
-        'GOOGL': 'Google',
-        'TSLA': 'Tesla',
-        'MSFT': 'Microsoft',
-    }
     
     INDICATOR_NAMES = {
         'macd': 'MACD',
@@ -48,7 +53,15 @@ class NotificationSender:
     @classmethod
     def get_stock_name(cls, symbol: str) -> str:
         """Get human-readable stock name"""
-        return cls.STOCK_NAMES.get(symbol, symbol)
+        # Remove .KS or .KQ suffix for lookup
+        code = symbol.replace('.KS', '').replace('.KQ', '')
+        
+        # Try to find the stock name from global cache
+        stock_name = _STOCK_NAMES_CACHE.get(code, symbol)
+        
+        # Log INFO level to ensure visibility in production
+        logger.info(f"📊 Stock name lookup: {symbol} -> {code} -> {stock_name}")
+        return stock_name
     
     @classmethod
     def get_indicator_name(cls, indicator: str) -> str:
