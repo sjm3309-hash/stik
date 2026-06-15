@@ -83,7 +83,31 @@ class NotificationSender:
             # Get user FCM tokens
             tokens = await Database.get_user_devices(user_id)
             if not tokens:
-                logger.warning(f"No FCM tokens found for user {user_id}")
+                logger.warning(f"❌ No FCM tokens found for user {user_id} - Alert will NOT be sent!")
+                # Still save to history even if no tokens
+                stock_name = cls.get_stock_name(symbol)
+                indicator_name = cls.get_indicator_name(indicator)
+                timeframe_name = cls.get_timeframe_name(timeframe)
+                price_str = f"{price:,.0f}" if price else "N/A"
+                message_template = cls.SIGNAL_MESSAGES.get(signal_type, cls.SIGNAL_MESSAGES['buy'])
+                title = message_template['title'].format(stock=stock_name)
+                body = message_template['body'].format(
+                    timeframe=timeframe_name,
+                    indicator=indicator_name,
+                    price=price_str
+                )
+                await Database.save_alert_history(
+                    alert_id=alert_id,
+                    user_id=user_id,
+                    ticker=symbol,
+                    timeframe=timeframe,
+                    indicator=indicator,
+                    condition=signal_type,
+                    trigger_price=price or 0.0,
+                    signal_type=signal_type,
+                    message=f"{title} - {body}",
+                    notification_sent=False
+                )
                 return
             
             # Get user's global notification settings
@@ -125,40 +149,28 @@ class NotificationSender:
                 vibrate_enabled=vibrate_enabled
             )
             
+            # Save to alert history regardless of FCM success
+            await Database.save_alert_history(
+                alert_id=alert_id,
+                user_id=user_id,
+                ticker=symbol,
+                timeframe=timeframe,
+                indicator=indicator,
+                condition=signal_type,
+                trigger_price=price or 0.0,
+                signal_type=signal_type,
+                message=f"{title} - {body}",
+                notification_sent=success
+            )
+            
+            # CRITICAL: Update last_triggered_at REGARDLESS of FCM success
+            # This ensures cooldown works even if notifications fail
+            await Database.update_alert_last_triggered(alert_id)
+            
             if success:
-                # Save to alert history
-                await Database.save_alert_history(
-                    alert_id=alert_id,
-                    user_id=user_id,
-                    ticker=symbol,
-                    timeframe=timeframe,
-                    indicator=indicator,
-                    condition=signal_type,
-                    trigger_price=price or 0.0,
-                    signal_type=signal_type,
-                    message=f"{title} - {body}",
-                    notification_sent=True
-                )
-                
-                # Update last_triggered_at in alerts table
-                await Database.update_alert_last_triggered(alert_id)
-                
-                logger.info(f"Notification sent successfully for alert {alert_id}")
+                logger.info(f"✅ Notification sent successfully for alert {alert_id}")
             else:
-                logger.error(f"Failed to send notification for alert {alert_id}")
-                # Still save to history but mark as failed
-                await Database.save_alert_history(
-                    alert_id=alert_id,
-                    user_id=user_id,
-                    ticker=symbol,
-                    timeframe=timeframe,
-                    indicator=indicator,
-                    condition=signal_type,
-                    trigger_price=price or 0.0,
-                    signal_type=signal_type,
-                    message=f"{title} - {body}",
-                    notification_sent=False
-                )
+                logger.error(f"❌ Failed to send notification for alert {alert_id}, but cooldown still applied")
                 
         except Exception as e:
             logger.error(f"Error sending alert notification: {e}")

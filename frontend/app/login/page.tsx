@@ -28,7 +28,8 @@ export default function LoginPage() {
         throw error;
       }
 
-      router.push("/");
+      // 로그인 성공 후 바로 대시보드로 이동
+      router.push("/dashboard");
     } catch (err: any) {
       // 에러 메시지 한글화
       let errorMessage = "로그인 중 오류가 발생했습니다.";

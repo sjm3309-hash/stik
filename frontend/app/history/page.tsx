@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import stockNames from "@/data/stock_names.json";
 
 interface AlertHistory {
   id: string;
@@ -59,25 +60,69 @@ export default function AlertHistoryPage() {
     }
   }
 
+  async function deleteHistoryItem(itemId: string) {
+    if (!confirm("이 알림 기록을 삭제하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      const supabase = getSupabaseClient();
+      const { error } = await supabase
+        .from("alert_history")
+        .delete()
+        .eq("id", itemId);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setHistory(history.filter(item => item.id !== itemId));
+      alert("알림 기록이 삭제되었습니다.");
+    } catch (error) {
+      console.error("Failed to delete history item:", error);
+      alert("알림 기록 삭제에 실패했습니다.");
+    }
+  }
+
+  async function deleteAllHistory() {
+    if (!user) return;
+
+    if (!confirm("모든 알림 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+      return;
+    }
+
+    try {
+      const supabase = getSupabaseClient();
+      const { error } = await supabase
+        .from("alert_history")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      setHistory([]);
+      alert("모든 알림 기록이 삭제되었습니다.");
+    } catch (error) {
+      console.error("Failed to delete all history:", error);
+      alert("알림 기록 삭제에 실패했습니다.");
+    }
+  }
+
   function formatDate(dateString: string) {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
 
+    // 1분 미만이면 "방금 전", 그 외에는 정확한 날짜/시간 표시
     if (diffMins < 1) return "방금 전";
-    if (diffMins < 60) return `${diffMins}분 전`;
-    if (diffHours < 24) return `${diffHours}시간 전`;
-    if (diffDays < 7) return `${diffDays}일 전`;
     
     return date.toLocaleDateString("ko-KR", {
       year: "numeric",
-      month: "short",
+      month: "long",
       day: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
+      hour12: true
     });
   }
 
@@ -111,6 +156,32 @@ export default function AlertHistoryPage() {
     return names[timeframe] || timeframe;
   }
 
+  function getStockName(ticker: string) {
+    // 종목 코드에서 .KS, .KQ 제거
+    const code = ticker.replace('.KS', '').replace('.KQ', '');
+    
+    // JSON 파일에서 종목명 조회
+    return (stockNames as Record<string, string>)[code] || ticker;
+  }
+
+  function getConditionName(condition: string) {
+    const conditions: Record<string, string> = {
+      "golden_cross": "골든크로스",
+      "death_cross": "데드크로스",
+      "above": "상향 돌파",
+      "below": "하향 돌파",
+      "overbought": "과매수",
+      "oversold": "과매도",
+      "upper_break": "상단 돌파",
+      "lower_break": "하단 돌파",
+      "above_ma": "이평선 상향 돌파",
+      "below_ma": "이평선 하향 돌파",
+      "buy": "매수",
+      "sell": "매도",
+    };
+    return conditions[condition] || condition;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-blue-50 to-gray-50">
@@ -137,16 +208,30 @@ export default function AlertHistoryPage() {
             대시보드로 돌아가기
           </button>
           
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-teal-500 to-blue-600 rounded-xl shadow-lg">
-              <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-teal-500 to-blue-600 rounded-xl shadow-lg">
+                <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">알림 히스토리</h1>
+                <p className="text-sm text-gray-600">과거에 발생한 모든 알림 내역</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">알림 히스토리</h1>
-              <p className="text-sm text-gray-600">과거에 발생한 모든 알림 내역</p>
-            </div>
+            
+            {history.length > 0 && (
+              <button
+                onClick={deleteAllHistory}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                전체 삭제
+              </button>
+            )}
           </div>
         </div>
 
@@ -187,7 +272,7 @@ export default function AlertHistoryPage() {
                     </div>
                     
                     <h3 className="font-semibold text-gray-900 mb-1">
-                      {item.ticker} {getTimeframeName(item.timeframe)} {getIndicatorName(item.indicator)}
+                      {getStockName(item.ticker)} {getTimeframeName(item.timeframe)} {getIndicatorName(item.indicator)} {item.condition && getConditionName(item.condition)}
                     </h3>
                     
                     <p className="text-sm text-gray-600">
@@ -199,18 +284,30 @@ export default function AlertHistoryPage() {
                     </p>
                   </div>
                   
-                  <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${
-                    item.signal_type === "buy"
-                      ? "bg-teal-100 text-teal-600"
-                      : "bg-red-100 text-red-600"
-                  }`}>
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      {item.signal_type === "buy" ? (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                      ) : (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" />
-                      )}
-                    </svg>
+                  <div className="flex items-center gap-2">
+                    <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${
+                      item.signal_type === "buy"
+                        ? "bg-teal-100 text-teal-600"
+                        : "bg-red-100 text-red-600"
+                    }`}>
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        {item.signal_type === "buy" ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" />
+                        )}
+                      </svg>
+                    </div>
+                    
+                    <button
+                      onClick={() => deleteHistoryItem(item.id)}
+                      className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors"
+                      title="삭제"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>

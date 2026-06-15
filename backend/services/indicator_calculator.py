@@ -45,7 +45,8 @@ class IndicatorCalculator:
     
     @staticmethod
     def detect_macd_cross(df: pd.DataFrame, macd_col: str = 'MACD_12_26_9', 
-                         signal_col: str = 'MACDs_12_26_9') -> Optional[str]:
+                         signal_col: str = 'MACDs_12_26_9', 
+                         threshold: float = 0.01) -> Optional[str]:
         """
         Detect MACD crossover
         
@@ -60,14 +61,26 @@ class IndicatorCalculator:
             prev = df.iloc[-2]
             curr = df.iloc[-1]
             
-            # Golden Cross: MACD crosses above Signal
-            if prev[macd_col] <= prev[signal_col] and curr[macd_col] > curr[signal_col]:
-                logger.info("MACD Golden Cross detected")
+            # Calculate differences
+            prev_diff = prev[macd_col] - prev[signal_col]
+            curr_diff = curr[macd_col] - curr[signal_col]
+            
+            # Log MACD values for debugging
+            logger.info(f"MACD Check - Prev: MACD={prev[macd_col]:.4f}, Signal={prev[signal_col]:.4f}, Diff={prev_diff:.4f}")
+            logger.info(f"MACD Check - Curr: MACD={curr[macd_col]:.4f}, Signal={curr[signal_col]:.4f}, Diff={curr_diff:.4f}")
+            
+            # Golden Cross: MACD crosses above Signal with meaningful difference
+            # Previous: MACD below or equal to Signal
+            # Current: MACD clearly above Signal (by at least threshold)
+            if prev_diff <= 0 and curr_diff > threshold:
+                logger.info(f"🟢 MACD Golden Cross detected! Prev diff: {prev_diff:.4f}, Curr diff: {curr_diff:.4f} (threshold: {threshold})")
                 return 'golden_cross'
             
-            # Dead Cross: MACD crosses below Signal
-            if prev[macd_col] >= prev[signal_col] and curr[macd_col] < curr[signal_col]:
-                logger.info("MACD Dead Cross detected")
+            # Dead Cross: MACD crosses below Signal with meaningful difference
+            # Previous: MACD above or equal to Signal
+            # Current: MACD clearly below Signal (by at least threshold)
+            if prev_diff >= 0 and curr_diff < -threshold:
+                logger.info(f"🔴 MACD Dead Cross detected! Prev diff: {prev_diff:.4f}, Curr diff: {curr_diff:.4f} (threshold: {threshold})")
                 return 'dead_cross'
             
             return None
@@ -97,9 +110,9 @@ class IndicatorCalculator:
     
     @staticmethod
     def detect_rsi_signal(df: pd.DataFrame, overbought: float = 70, oversold: float = 30, 
-                         rsi_col: str = 'RSI_14') -> Optional[str]:
+                         rsi_col: str = 'RSI_14', threshold: float = 1.0) -> Optional[str]:
         """
-        Detect RSI overbought/oversold signals
+        Detect RSI overbought/oversold signals with threshold
         
         Returns:
             'overbought', 'oversold', or None
@@ -111,14 +124,16 @@ class IndicatorCalculator:
             curr_rsi = df[rsi_col].iloc[-1]
             prev_rsi = df[rsi_col].iloc[-2]
             
-            # Cross above overbought
-            if prev_rsi <= overbought and curr_rsi > overbought:
-                logger.info(f"RSI overbought detected: {curr_rsi}")
+            logger.info(f"RSI Check - Prev: {prev_rsi:.2f}, Curr: {curr_rsi:.2f}")
+            
+            # Cross above overbought (must exceed threshold)
+            if prev_rsi <= overbought and curr_rsi > (overbought + threshold):
+                logger.info(f"🔴 RSI overbought detected: {curr_rsi:.2f} > {overbought + threshold}")
                 return 'overbought'
             
-            # Cross below oversold
-            if prev_rsi >= oversold and curr_rsi < oversold:
-                logger.info(f"RSI oversold detected: {curr_rsi}")
+            # Cross below oversold (must exceed threshold)
+            if prev_rsi >= oversold and curr_rsi < (oversold - threshold):
+                logger.info(f"🟢 RSI oversold detected: {curr_rsi:.2f} < {oversold - threshold}")
                 return 'oversold'
             
             return None
@@ -154,9 +169,12 @@ class IndicatorCalculator:
     
     @staticmethod
     def detect_bollinger_signal(df: pd.DataFrame, upper_col: str = 'BBU_20_2.0', 
-                                lower_col: str = 'BBL_20_2.0') -> Optional[str]:
+                                lower_col: str = 'BBL_20_2.0', threshold_percent: float = 0.2) -> Optional[str]:
         """
-        Detect Bollinger Band breakout
+        Detect Bollinger Band breakout with threshold
+        
+        Args:
+            threshold_percent: Percentage above/below band required for signal (default 0.2%)
         
         Returns:
             'upper_break', 'lower_break', or None
@@ -167,17 +185,23 @@ class IndicatorCalculator:
             
             prev_close = df['Close'].iloc[-2]
             curr_close = df['Close'].iloc[-1]
+            prev_upper = df[upper_col].iloc[-2]
             curr_upper = df[upper_col].iloc[-1]
+            prev_lower = df[lower_col].iloc[-2]
             curr_lower = df[lower_col].iloc[-1]
             
-            # Break above upper band
-            if prev_close <= df[upper_col].iloc[-2] and curr_close > curr_upper:
-                logger.info("Bollinger upper band breakout detected")
+            logger.info(f"Bollinger Check - Close: {curr_close:.2f}, Upper: {curr_upper:.2f}, Lower: {curr_lower:.2f}")
+            
+            # Break above upper band (must exceed by threshold_percent)
+            upper_threshold = curr_upper * (1 + threshold_percent / 100)
+            if prev_close <= prev_upper and curr_close > upper_threshold:
+                logger.info(f"🔴 Bollinger upper band breakout: {curr_close:.2f} > {upper_threshold:.2f}")
                 return 'upper_break'
             
-            # Break below lower band
-            if prev_close >= df[lower_col].iloc[-2] and curr_close < curr_lower:
-                logger.info("Bollinger lower band breakout detected")
+            # Break below lower band (must exceed by threshold_percent)
+            lower_threshold = curr_lower * (1 - threshold_percent / 100)
+            if prev_close >= prev_lower and curr_close < lower_threshold:
+                logger.info(f"🟢 Bollinger lower band breakout: {curr_close:.2f} < {lower_threshold:.2f}")
                 return 'lower_break'
             
             return None
@@ -202,9 +226,9 @@ class IndicatorCalculator:
     
     @staticmethod
     def detect_disparity_signal(df: pd.DataFrame, overheat: float = 105, chill: float = 95, 
-                                disparity_col: str = 'Disparity_20') -> Optional[str]:
+                                disparity_col: str = 'Disparity_20', threshold: float = 0.5) -> Optional[str]:
         """
-        Detect disparity overbought/oversold signals
+        Detect disparity overbought/oversold signals with threshold
         
         Returns:
             'overbought' (disparity > overheat), 'oversold' (disparity < chill), or None
@@ -216,14 +240,16 @@ class IndicatorCalculator:
             curr_disparity = df[disparity_col].iloc[-1]
             prev_disparity = df[disparity_col].iloc[-2]
             
-            # Overheat (매도 신호)
-            if prev_disparity <= overheat and curr_disparity > overheat:
-                logger.info(f"Disparity overheat detected: {curr_disparity}")
+            logger.info(f"Disparity Check - Prev: {prev_disparity:.2f}, Curr: {curr_disparity:.2f}")
+            
+            # Overheat (매도 신호) - must exceed threshold
+            if prev_disparity <= overheat and curr_disparity > (overheat + threshold):
+                logger.info(f"🔴 Disparity overheat detected: {curr_disparity:.2f} > {overheat + threshold}")
                 return 'overbought'
             
-            # Chill (매수 신호)
-            if prev_disparity >= chill and curr_disparity < chill:
-                logger.info(f"Disparity chill detected: {curr_disparity}")
+            # Chill (매수 신호) - must exceed threshold
+            if prev_disparity >= chill and curr_disparity < (chill - threshold):
+                logger.info(f"🟢 Disparity chill detected: {curr_disparity:.2f} < {chill - threshold}")
                 return 'oversold'
             
             return None
@@ -258,9 +284,9 @@ class IndicatorCalculator:
     
     @staticmethod
     def detect_cci_signal(df: pd.DataFrame, upper: float = 100, lower: float = -100, 
-                         cci_col: str = 'CCI_14') -> Optional[str]:
+                         cci_col: str = 'CCI_14', threshold: float = 5.0) -> Optional[str]:
         """
-        Detect CCI overbought/oversold signals
+        Detect CCI overbought/oversold signals with threshold
         
         Returns:
             'overbought' (CCI > upper), 'oversold' (CCI < lower), or None
@@ -272,14 +298,16 @@ class IndicatorCalculator:
             curr_cci = df[cci_col].iloc[-1]
             prev_cci = df[cci_col].iloc[-2]
             
-            # Overbought
-            if prev_cci <= upper and curr_cci > upper:
-                logger.info(f"CCI overbought detected: {curr_cci}")
+            logger.info(f"CCI Check - Prev: {prev_cci:.2f}, Curr: {curr_cci:.2f}")
+            
+            # Overbought - must exceed threshold
+            if prev_cci <= upper and curr_cci > (upper + threshold):
+                logger.info(f"🔴 CCI overbought detected: {curr_cci:.2f} > {upper + threshold}")
                 return 'overbought'
             
-            # Oversold
-            if prev_cci >= lower and curr_cci < lower:
-                logger.info(f"CCI oversold detected: {curr_cci}")
+            # Oversold - must exceed threshold
+            if prev_cci >= lower and curr_cci < (lower - threshold):
+                logger.info(f"🟢 CCI oversold detected: {curr_cci:.2f} < {lower - threshold}")
                 return 'oversold'
             
             return None

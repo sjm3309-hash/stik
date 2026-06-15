@@ -18,7 +18,34 @@ class AlertChecker:
     
     @classmethod
     async def _check_target_price_alert(cls, alert: Dict[str, Any], alert_id: str, user_id: str, symbol: str):
-        """Check target price alert"""
+        """Check target price alert with cooldown"""
+        # Get user's global cooldown setting
+        user_id_str = alert.get('user_id')
+        user_profile = await Database.get_user_profile(user_id_str)
+        global_cooldown = user_profile.get('global_cooldown_minutes', 0) if user_profile else 0
+        
+        # Check cooldown if enabled
+        last_triggered_at = alert.get('last_triggered_at')
+        if global_cooldown > 0 and last_triggered_at:
+            from datetime import timezone
+            from dateutil import parser as date_parser
+            
+            if isinstance(last_triggered_at, str):
+                last_triggered_dt = date_parser.parse(last_triggered_at)
+            else:
+                last_triggered_dt = last_triggered_at
+            
+            if last_triggered_dt.tzinfo is None:
+                last_triggered_dt = last_triggered_dt.replace(tzinfo=timezone.utc)
+            
+            now = datetime.now(timezone.utc)
+            elapsed_minutes = (now - last_triggered_dt).total_seconds() / 60
+            
+            # Use global cooldown setting
+            if elapsed_minutes < global_cooldown:
+                logger.info(f"Target price alert {alert_id} is in cooldown ({elapsed_minutes:.1f}/{global_cooldown} min), skipping")
+                return
+        
         parameters = alert.get('parameters', {}).get('target_price', {})
         buy_price = parameters.get('buy_price')
         sell_price = parameters.get('sell_price')
@@ -33,36 +60,42 @@ class AlertChecker:
         
         logger.info(f"Current price for {symbol}: {current_price}")
         
-        # Check buy target price
+        # Check buy target price (price at or below target = good buy opportunity)
         enable_buy = alert.get('enable_buy_signal', True)
-        if enable_buy and buy_price and current_price <= buy_price:
-            logger.info(f"Buy target price reached: {current_price} <= {buy_price}")
-            await NotificationSender.send_alert_notification(
-                alert=alert,
-                alert_id=alert_id,
-                user_id=user_id,
-                symbol=symbol,
-                signal_type='buy',
-                indicator='target_price',
-                price=current_price,
-                timeframe=timeframe
-            )
-            return
+        if enable_buy and buy_price:
+            # Alert when price reaches target (±0.5% tolerance for exact match)
+            tolerance = buy_price * 0.005
+            if abs(current_price - buy_price) <= tolerance or current_price <= buy_price:
+                logger.info(f"Buy target price reached: {current_price} ≈ {buy_price}")
+                await NotificationSender.send_alert_notification(
+                    alert=alert,
+                    alert_id=alert_id,
+                    user_id=user_id,
+                    symbol=symbol,
+                    signal_type='buy',
+                    indicator='target_price',
+                    price=current_price,
+                    timeframe=timeframe
+                )
+                return
         
-        # Check sell target price
+        # Check sell target price (price at or above target = good sell opportunity)
         enable_sell = alert.get('enable_sell_signal', True)
-        if enable_sell and sell_price and current_price >= sell_price:
-            logger.info(f"Sell target price reached: {current_price} >= {sell_price}")
-            await NotificationSender.send_alert_notification(
-                alert=alert,
-                alert_id=alert_id,
-                user_id=user_id,
-                symbol=symbol,
-                signal_type='sell',
-                indicator='target_price',
-                price=current_price,
-                timeframe=timeframe
-            )
+        if enable_sell and sell_price:
+            # Alert when price reaches target (±0.5% tolerance for exact match)
+            tolerance = sell_price * 0.005
+            if abs(current_price - sell_price) <= tolerance or current_price >= sell_price:
+                logger.info(f"Sell target price reached: {current_price} ≈ {sell_price}")
+                await NotificationSender.send_alert_notification(
+                    alert=alert,
+                    alert_id=alert_id,
+                    user_id=user_id,
+                    symbol=symbol,
+                    signal_type='sell',
+                    indicator='target_price',
+                    price=current_price,
+                    timeframe=timeframe
+                )
     
     @classmethod
     async def check_all_alerts(cls):
@@ -97,10 +130,29 @@ class AlertChecker:
         
         # Get user's global settings for cooldown
         user_profile = await Database.get_user_profile(user_id)
-        cooldown_period = user_profile.get('global_cooldown_minutes', 0) if user_profile else 0
+        global_cooldown = user_profile.get('global_cooldown_minutes', 0) if user_profile else 0
+        
+        # Auto cooldown based on timeframe (prevents alert spam within same candle)
+        # Only for minute/hour timeframes, not for daily/weekly
+        timeframe_cooldown_map = {
+            '1m': 1,
+            '3m': 3,
+            '5m': 5,
+            '10m': 10,
+            '15m': 15,
+            '30m': 30,
+            '1h': 60,
+        }
+        auto_cooldown = timeframe_cooldown_map.get(timeframe, 0)
+        
+        # Use the longer of global or auto cooldown
+        cooldown_period = max(global_cooldown, auto_cooldown)
         last_triggered_at = alert.get('last_triggered_at')
         
-        # Check cooldown (prevents duplicate alerts based on user's global setting)
+        if auto_cooldown > 0:
+            logger.info(f"Auto cooldown for {timeframe}: {auto_cooldown} min (global: {global_cooldown} min, using: {cooldown_period} min)")
+        
+        # Check cooldown (prevents duplicate alerts)
         if cooldown_period > 0 and last_triggered_at:
             from datetime import timezone
             # Parse last_triggered_at

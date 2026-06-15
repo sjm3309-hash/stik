@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     # Firebase
     firebase_credentials_path: str = os.getenv("FIREBASE_CREDENTIALS_PATH", "./firebase-service-account.json")
     
+    # 한국투자증권 OpenAPI
+    kis_app_key: str = os.getenv("KIS_APP_KEY", "")
+    kis_app_secret: str = os.getenv("KIS_APP_SECRET", "")
+    kis_base_url: str = os.getenv("KIS_BASE_URL", "https://openapi.koreainvestment.com:9443")
+    kis_mock_mode: str = os.getenv("KIS_MOCK_MODE", "true")
+    
     # App
     environment: str = os.getenv("ENVIRONMENT", "development")
     log_level: str = os.getenv("LOG_LEVEL", "INFO")

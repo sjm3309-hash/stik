@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase/client";
-import NotificationSetup from "@/components/NotificationSetup";
-import AuthButton from "@/components/AuthButton";
 
 export default function Home() {
   const router = useRouter();
@@ -21,9 +19,11 @@ export default function Home() {
       setUser(user);
       setLoading(false);
       
-      // Redirect logged-in users to dashboard
+      // Redirect logged-in users to dashboard, non-logged-in users to login
       if (user) {
         router.push("/dashboard");
+      } else {
+        router.push("/login");
       }
     }
 
@@ -37,40 +37,20 @@ export default function Home() {
       // Redirect on login
       if (session?.user) {
         router.push("/dashboard");
+      } else {
+        router.push("/login");
       }
     });
 
     return () => subscription.unsubscribe();
   }, [router]);
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
-        <div className="text-zinc-600 dark:text-zinc-400">로딩 중...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4 dark:bg-black">
-        <div className="w-full max-w-md space-y-8 text-center">
-          <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-zinc-50">
-            Stik
-          </h1>
-          <p className="text-lg text-zinc-600 dark:text-zinc-400">
-            알림을 설정하려면 먼저 로그인하세요.
-          </p>
-          <AuthButton />
-        </div>
-      </div>
-    );
-  }
-
-  // User is logged in, will redirect via useEffect
+  // Show loading state while checking auth and redirecting
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
-      <div className="text-zinc-600 dark:text-zinc-400">대시보드로 이동 중...</div>
+      <div className="text-zinc-600 dark:text-zinc-400">
+        {loading ? "로딩 중..." : user ? "대시보드로 이동 중..." : "로그인 페이지로 이동 중..."}
+      </div>
     </div>
   );
 }

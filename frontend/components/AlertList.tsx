@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import stockNames from "@/data/stock_names.json";
 
 type Alert = {
   id: string;
@@ -16,13 +17,6 @@ type Alert = {
   updated_at: string;
 };
 
-type Symbol = {
-  name: string;
-  symbol: string;
-  type: "stock" | "etf";
-  market: string;
-};
-
 interface AlertListProps {
   alerts: Alert[];
   onAlertDeleted: () => void;
@@ -30,36 +24,27 @@ interface AlertListProps {
 
 export default function AlertList({ alerts, onAlertDeleted }: AlertListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [symbolMap, setSymbolMap] = useState<Map<string, string>>(new Map());
-
-  useEffect(() => {
-    async function loadSymbols() {
-      try {
-        const response = await fetch("/symbols.json");
-        const symbols: Symbol[] = await response.json();
-        const map = new Map<string, string>();
-        symbols.forEach((s) => map.set(s.symbol, s.name));
-        setSymbolMap(map);
-      } catch (error) {
-        console.error("Failed to load symbols:", error);
-      }
-    }
-
-    loadSymbols();
-  }, []);
 
   function getSymbolName(symbol: string): string {
-    return symbolMap.get(symbol) || symbol;
+    // 종목 코드에서 .KS, .KQ 제거
+    const code = symbol.replace('.KS', '').replace('.KQ', '');
+    
+    // JSON 파일에서 종목명 조회
+    return (stockNames as Record<string, string>)[code] || symbol;
   }
 
   function getTimeframeName(timeframe: string): string {
     const timeframeMap: Record<string, string> = {
+      "1m": "1분봉",
+      "3m": "3분봉",
+      "5m": "5분봉",
+      "10m": "10분봉",
+      "15m": "15분봉",
+      "30m": "30분봉",
+      "1h": "1시간봉",
       "1d": "일봉",
       "1w": "주봉",
-      "1m": "월봉",
-      "1h": "시간봉",
-      "15m": "15분봉",
-      "5m": "5분봉",
+      "1M": "월봉",
     };
     return timeframeMap[timeframe] || timeframe;
   }

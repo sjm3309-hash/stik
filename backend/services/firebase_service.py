@@ -58,6 +58,20 @@ class FirebaseService:
                 )
             )
             
+            # Build Webpush config for browsers (Chrome, Firefox, Edge, etc.)
+            webpush_config = messaging.WebpushConfig(
+                notification=messaging.WebpushNotification(
+                    title=title,
+                    body=body,
+                    icon='/icon.png',
+                    badge='/badge.png',
+                    # requireInteraction keeps the notification visible until user interacts
+                    tag='stock-alert',
+                    renotify=True,
+                )
+                # Note: fcm_options.link requires HTTPS, skip for local development
+            )
+            
             message = messaging.Message(
                 notification=messaging.Notification(
                     title=title,
@@ -66,7 +80,8 @@ class FirebaseService:
                 data=data or {},
                 token=token,
                 android=android_config,
-                apns=apns_config
+                apns=apns_config,
+                webpush=webpush_config
             )
             
             response = messaging.send(message)
